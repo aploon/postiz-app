@@ -6,12 +6,13 @@ Social-only scheduling UI based on the Postiz frontend structure.
 
 - Auth (email/password)
 - Calendar / launches (create, schedule, post now)
+- Analytics (social channels)
 - Social channel connect (e.g. LinkedIn)
 - Media library
-- Basic settings (global + teams)
+- Basic settings (global + teams + Developers API key)
 - Notifications
 
-No agents, AI chat, analytics, plugs, third-party marketplace, billing UI, or developer OAuth apps.
+No agents, AI chat, plugs, third-party marketplace, billing UI, or OAuth Apps for third parties.
 
 ## Dev
 
