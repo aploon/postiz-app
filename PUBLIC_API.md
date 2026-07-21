@@ -14,7 +14,7 @@ Production Postiz cloud (référence) :
 https://api.postiz.com/public/v1
 ```
 
-Tous les endpoints ci-dessous sont préfixés par cette base (sauf le flux OAuth App décrit séparément).
+Tous les endpoints ci-dessous sont préfixés par cette base.
 
 ---
 
@@ -49,17 +49,10 @@ Authorization: <token>
 
 Sans préfixe `Bearer` obligatoire : envoyer la clé **telle quelle**.
 
-Deux types de tokens sont acceptés :
+### 1.1 API Key
 
-| Type | Format | Usage |
-|------|--------|--------|
-| **API Key** org | Chaîne opaque (clé affichée dans Settings → Public API) | Automatiser **ton propre** compte Postiz |
-| **OAuth App token** | Préfixe `pos_` | Agir **au nom d’utilisateurs** Postiz qui ont autorisé ton app |
-
-### 1.1 API Key (compte unique)
-
-1. Se connecter à Postiz / Takka (UI).
-2. Settings → **Public API** → révéler / copier la clé.
+1. Se connecter à Takka / Postiz (UI).
+2. Settings → **Developers** → onglet Access → révéler / copier la clé.
 3. Rotation possible via UI (`POST /user/api-key/rotate` — endpoint UI authentifié, pas public).
 
 Exemple :
@@ -67,44 +60,6 @@ Exemple :
 ```bash
 curl -s http://localhost:3000/public/v1/is-connected \
   -H "Authorization: VOTRE_API_KEY"
-```
-
-### 1.2 OAuth App (`pos_…`) — produit multi-utilisateurs
-
-Si ton app publie **pour d’autres utilisateurs Postiz** :
-
-1. Dans l’UI Postiz : créer une **OAuth App** (onglet Apps / Settings).
-2. Récupérer `client_id`, `client_secret`, `redirect_url`.
-3. Rediriger l’utilisateur vers le flow d’autorisation Postiz.
-4. Échanger le `code` contre un token `pos_…`.
-5. Utiliser ce token exactement comme une API Key sur `/public/v1/*`.
-
-**Échange de code** (endpoint hors `/public/v1`) :
-
-```http
-POST /oauth/token
-Content-Type: application/json
-
-{
-  "grant_type": "authorization_code",
-  "code": "<code_reçu_après_approve>",
-  "client_id": "<client_id>",
-  "client_secret": "<client_secret>"
-}
-```
-
-**Approve / deny** (utilisateur déjà connecté à Postiz) :
-
-```http
-POST /oauth/authorize
-```
-
-Body typique : `client_id`, `action` (`approve` | `deny`), `state` optionnel.
-
-Infos app (preview) :
-
-```http
-GET /oauth/authorize?client_id=...&state=...
 ```
 
 > Si Stripe est activé sur l’instance et que l’org n’a pas d’abonnement, l’API renvoie `401` (« No subscription found »).
@@ -585,7 +540,7 @@ L’API est conçue pour des appels **server-to-server**. Depuis un navigateur t
 ## 16. Parcours type bout-en-bout
 
 ```text
-1. Obtenir API Key (ou pos_ via OAuth App)
+1. Obtenir API Key (Settings → Developers → Access)
 2. GET  /is-connected
 3. GET  /integrations                    → choisir integration.id
    (sinon) GET /social/linkedin → OAuth → recharger /integrations
@@ -612,9 +567,8 @@ L’API est conçue pour des appels **server-to-server**. Depuis un navigateur t
 | Sujet | Fichier |
 |-------|---------|
 | Routes publiques | `apps/backend/src/public-api/routes/v1/public.integrations.controller.ts` |
-| Auth API Key / `pos_` | `apps/backend/src/services/auth/public.auth.middleware.ts` |
+| Auth API Key | `apps/backend/src/services/auth/public.auth.middleware.ts` |
 | DTO création post | `libraries/nestjs-libraries/src/dtos/posts/create.post.dto.ts` |
-| OAuth App token | `apps/backend/src/api/routes/oauth.controller.ts` |
 | SDK | `apps/sdk/src/index.ts` |
 
 Swagger backend (si activé sur l’instance) : souvent disponible sur le port API (ex. `/docs` selon config).

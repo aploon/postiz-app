@@ -22,6 +22,7 @@ import { useUser } from '@gitroom/takka-postiz/components/layout/user.context';
 import { LogoutComponent } from '@gitroom/takka-postiz/components/layout/logout.component';
 import { useSearchParams } from 'next/navigation';
 import { useVariables } from '@gitroom/react/helpers/variable.context';
+import { PublicComponent } from '@gitroom/takka-postiz/components/public-api/public.component';
 import Link from 'next/link';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { SVGLine } from '@gitroom/takka-postiz/components/launches/launches.component';
@@ -87,9 +88,12 @@ export const SettingsPopup: FC<{
     if (user?.tier?.team_members && isGeneral) {
       arr.push({ tab: 'teams', label: t('teams', 'Teams') });
     }
+    if (user?.tier?.public_api && isGeneral && showLogout) {
+      arr.push({ tab: 'api', label: t('developers', 'Developers') });
+    }
 
     return arr;
-  }, [user, isGeneral, t]);
+  }, [user, isGeneral, showLogout, t]);
 
   useEffect(() => {
     loadProfile();
@@ -150,6 +154,14 @@ export const SettingsPopup: FC<{
                   <TeamsComponent />
                 </div>
               )}
+              {tab === 'api' &&
+                !!user?.tier?.public_api &&
+                isGeneral &&
+                showLogout && (
+                  <div>
+                    <PublicComponent />
+                  </div>
+                )}
             </div>
           </form>
         </FormProvider>
