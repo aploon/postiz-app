@@ -9,7 +9,7 @@ import { Button } from '@gitroom/react/form/button';
 import { useSWRConfig } from 'swr';
 import { useToaster } from '@gitroom/react/toaster/toaster';
 import { useRouter } from 'next/navigation';
-import { useFireEvents } from '@gitroom/helpers/utils/use.fire.events';
+import { useFireEvents } from '@gitroom/helpers/utils/takka-postiz/use.fire.events';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 export const LifetimeDeal = () => {
   const t = useT();

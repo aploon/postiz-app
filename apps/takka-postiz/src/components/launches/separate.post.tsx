@@ -1,5 +1,5 @@
 import { Button } from '@gitroom/react/form/button';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import { FC, useCallback } from 'react';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';

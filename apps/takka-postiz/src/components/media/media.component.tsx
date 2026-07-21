@@ -26,7 +26,7 @@ import { useUppyUploader } from '@gitroom/takka-postiz/components/media/new.uplo
 import dynamic from 'next/dynamic';
 import { useUser } from '@gitroom/takka-postiz/components/layout/user.context';
 import { DropFiles } from '@gitroom/takka-postiz/components/layout/drop.files';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { ThirdPartyMedia } from '@gitroom/takka-postiz/components/third-parties/third-party.media';
 import { ReactSortable } from 'react-sortablejs';

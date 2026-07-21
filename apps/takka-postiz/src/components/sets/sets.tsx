@@ -9,7 +9,7 @@ import { Button } from '@gitroom/react/form/button';
 import { Input } from '@gitroom/react/form/input';
 import { useToaster } from '@gitroom/react/toaster/toaster';
 import clsx from 'clsx';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { AddEditModal } from '@gitroom/takka-postiz/components/new-launch/add.edit.modal';
 import { newDayjs } from '@gitroom/takka-postiz/components/layout/set.timezone';

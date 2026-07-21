@@ -27,7 +27,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { AddPostButton } from '@gitroom/takka-postiz/components/new-launch/add.post.button';
 import { MultiMediaComponent } from '@gitroom/takka-postiz/components/media/media.component';
 import { UpDownArrow } from '@gitroom/takka-postiz/components/launches/up.down.arrow';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import { useExistingData } from '@gitroom/takka-postiz/components/launches/helpers/use.existing.data';
 import { useDropzone } from 'react-dropzone';
 import { useUppyUploader } from '@gitroom/takka-postiz/components/media/new.uploader';

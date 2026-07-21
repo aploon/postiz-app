@@ -14,9 +14,9 @@ import { LoadingComponent } from '@gitroom/takka-postiz/components/layout/loadin
 import clsx from 'clsx';
 import { GoogleProvider } from '@gitroom/takka-postiz/components/auth/providers/google.provider';
 import { OauthProvider } from '@gitroom/takka-postiz/components/auth/providers/oauth.provider';
-import { useFireEvents } from '@gitroom/helpers/utils/use.fire.events';
+import { useFireEvents } from '@gitroom/helpers/utils/takka-postiz/use.fire.events';
 import { useVariables } from '@gitroom/react/helpers/variable.context';
-import { useTrack } from '@gitroom/react/helpers/use.track';
+import { useTrack } from '@gitroom/react/helpers/takka-postiz/use.track';
 import { TrackEnum } from '@gitroom/nestjs-libraries/user/track.enum';
 import { FarcasterProvider } from '@gitroom/takka-postiz/components/auth/providers/farcaster.provider';
 import dynamic from 'next/dynamic';

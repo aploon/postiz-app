@@ -14,7 +14,7 @@ import { Checkbox } from '@gitroom/react/form/checkbox';
 import { classValidatorResolver } from '@hookform/resolvers/class-validator';
 import { AddTeamMemberDto } from '@gitroom/nestjs-libraries/dtos/settings/add.team.member.dto';
 import { useToaster } from '@gitroom/react/toaster/toaster';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import copy from 'copy-to-clipboard';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 

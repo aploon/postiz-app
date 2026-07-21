@@ -7,7 +7,7 @@ import {
 import { FC, useCallback } from 'react';
 import { useSettings } from '@gitroom/takka-postiz/components/launches/helpers/use.values';
 import { useFieldArray } from 'react-hook-form';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import { Button } from '@gitroom/react/form/button';
 import { Subreddit } from './subreddit';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';

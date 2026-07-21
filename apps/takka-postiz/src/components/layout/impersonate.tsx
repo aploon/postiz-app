@@ -5,7 +5,7 @@ import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import { useUser } from '@gitroom/takka-postiz/components/layout/user.context';
 import { Select } from '@gitroom/react/form/select';
 import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import { useVariables } from '@gitroom/react/helpers/variable.context';
 import { setCookie } from '@gitroom/takka-postiz/components/layout/layout.context';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';

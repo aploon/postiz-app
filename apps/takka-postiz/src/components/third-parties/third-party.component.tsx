@@ -8,7 +8,7 @@ import React, { FC, useCallback, useState } from 'react';
 import useSWR from 'swr';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import { useToaster } from '@gitroom/react/toaster/toaster';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import useCookie from 'react-use-cookie';
 import { SVGLine } from '@gitroom/takka-postiz/components/launches/launches.component';
 

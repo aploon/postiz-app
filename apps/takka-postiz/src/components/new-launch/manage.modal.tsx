@@ -23,7 +23,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { RepeatComponent } from '@gitroom/takka-postiz/components/launches/repeat.component';
 import { TagsComponent } from '@gitroom/takka-postiz/components/launches/tags.component';
 import { useToaster } from '@gitroom/react/toaster/toaster';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
 import { useModals } from '@gitroom/takka-postiz/components/layout/new-modal';

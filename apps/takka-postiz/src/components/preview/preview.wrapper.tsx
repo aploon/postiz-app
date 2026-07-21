@@ -5,7 +5,7 @@ import { ContextWrapper } from '@gitroom/takka-postiz/components/layout/user.con
 import { ReactNode, useCallback } from 'react';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import { Toaster } from '@gitroom/react/toaster/toaster';
-import { MantineWrapper } from '@gitroom/react/helpers/mantine.wrapper';
+import { MantineWrapper } from '@gitroom/react/helpers/takka-postiz/mantine.wrapper';
 import { ToolTip } from '@gitroom/takka-postiz/components/layout/top.tip';
 
 export const PreviewWrapper = ({ children }: { children: ReactNode }) => {

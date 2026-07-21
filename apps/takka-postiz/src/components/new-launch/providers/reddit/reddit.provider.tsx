@@ -16,7 +16,7 @@ import {
 } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/reddit.dto';
 import clsx from 'clsx';
 import { useMediaDirectory } from '@gitroom/react/helpers/use.media.directory';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import SafeImage from '@gitroom/react/helpers/safe.image';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { useFormatting } from '@gitroom/takka-postiz/components/launches/helpers/use.formatting';

@@ -3,7 +3,7 @@
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { Integrations } from '@gitroom/takka-postiz/components/launches/calendar.context';
 import dayjs from 'dayjs';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import { Select } from '@gitroom/react/form/select';
 import { Button } from '@gitroom/react/form/button';
 import utc from 'dayjs/plugin/utc';

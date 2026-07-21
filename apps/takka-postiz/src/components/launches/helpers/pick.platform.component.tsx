@@ -1,7 +1,7 @@
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { Integrations } from '@gitroom/takka-postiz/components/launches/calendar.context';
 import { useMoveToIntegrationListener } from '@gitroom/takka-postiz/components/launches/helpers/use.move.to.integration';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import clsx from 'clsx';
 import SafeImage from '@gitroom/react/helpers/safe.image';
 import { useStateCallback } from '@gitroom/react/helpers/use.state.callback';

@@ -8,7 +8,7 @@ import clsx from 'clsx';
 import { useUser } from '@gitroom/takka-postiz/components/layout/user.context';
 import { Input } from '@gitroom/react/form/input';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 export const CommentBox: FC<{
   value?: string;
   type: 'textarea' | 'input';

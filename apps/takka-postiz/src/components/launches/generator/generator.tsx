@@ -3,7 +3,7 @@
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { useUser } from '@gitroom/takka-postiz/components/layout/user.context';
 import { useRouter } from 'next/navigation';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import { useModals } from '@gitroom/takka-postiz/components/layout/new-modal';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { classValidatorResolver } from '@hookform/resolvers/class-validator';

@@ -1,6 +1,6 @@
 import { FC, ReactNode, useEffect, useRef } from 'react';
 import { useModals } from '@gitroom/takka-postiz/components/layout/new-modal';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 
 export const ModalWrapperComponent: FC<{

@@ -11,7 +11,7 @@ import { FC, useCallback, useEffect, useState } from 'react';
 import Script from 'next/script';
 import { useVariables } from '@gitroom/react/helpers/variable.context';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import useSWR from 'swr';
 
 export const ChatbaseComponent: FC = () => {

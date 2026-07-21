@@ -15,7 +15,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Integration } from '@prisma/client';
 import ImageWithFallback from '@gitroom/react/helpers/image.with.fallback';
 import { useToaster } from '@gitroom/react/toaster/toaster';
-import { useFireEvents } from '@gitroom/helpers/utils/use.fire.events';
+import { useFireEvents } from '@gitroom/helpers/utils/takka-postiz/use.fire.events';
 import { Calendar } from './calendar';
 import { useDrag, useDrop } from 'react-dnd';
 import { DNDProvider } from '@gitroom/takka-postiz/components/launches/helpers/dnd.provider';

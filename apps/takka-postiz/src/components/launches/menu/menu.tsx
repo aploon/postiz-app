@@ -11,7 +11,7 @@ import React, {
 } from 'react';
 import { useClickOutside } from '@mantine/hooks';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
-import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
+import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import { useToaster } from '@gitroom/react/toaster/toaster';
 import { useModals } from '@gitroom/takka-postiz/components/layout/new-modal';
 import { TimeTable } from '@gitroom/takka-postiz/components/launches/time.table';

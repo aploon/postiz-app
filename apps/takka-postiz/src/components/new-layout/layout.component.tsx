@@ -26,7 +26,7 @@ import { NewSubscription } from '@gitroom/takka-postiz/components/layout/new.sub
 import { Support } from '@gitroom/takka-postiz/components/layout/support';
 import { ContinueProvider } from '@gitroom/takka-postiz/components/layout/continue.provider';
 import { ContextWrapper } from '@gitroom/takka-postiz/components/layout/user.context';
-import { MantineWrapper } from '@gitroom/react/helpers/mantine.wrapper';
+import { MantineWrapper } from '@gitroom/react/helpers/takka-postiz/mantine.wrapper';
 import { Impersonate } from '@gitroom/takka-postiz/components/layout/impersonate';
 import { AnnouncementBanner } from '@gitroom/takka-postiz/components/layout/announcement.banner';
 import { Title } from '@gitroom/takka-postiz/components/layout/title';
