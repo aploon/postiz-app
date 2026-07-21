@@ -2,6 +2,8 @@
 
 Ce document décrit comment une **application tierce** peut utiliser l’API publique Postiz (`/public/v1`) pour automatiser l’ensemble du cycle de vie des publications : authentification, connexion des réseaux, médias, planification, publication, suivi et analytics.
 
+Comme dans la doc Postiz, les appels se font **depuis ton backend** (ou un worker / n8n / SDK) avec la clé API
+
 Base URL (self-hosted local) :
 
 ```text
@@ -531,9 +533,7 @@ Les `POST /public/v1/posts` sont throttlés (clé = org). Variable d’env typiq
 
 Les erreurs de validation post sont renvoyées de façon lisible (provider + message).
 
-### CORS
-
-L’API est conçue pour des appels **server-to-server**. Depuis un navigateur tiers, configure CORS backend (`FRONTEND_URL` / origines autorisées) ou passe par ton backend.
+La clé API reste côté serveur : un front tiers qui appelle directement `/public/v1` se heurtera au CORS (origines limitées à `FRONTEND_URL` / `MAIN_URL`).
 
 ---
 
