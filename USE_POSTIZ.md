@@ -163,6 +163,59 @@ Commandes utiles : `pm2 status` · `pm2 logs` · `pm2 restart all` · `pm2 resta
 
 ---
 
+### Nginx reverse proxy
+
+**For frontend domain :**
+```nginx	
+location ^~ /uploads/ {
+	alias /var/www/vhosts/postiz/uploads/;
+	types {
+		image/jpeg jpg jpeg;
+		image/png png;
+		image/gif gif;
+		image/webp webp;
+		video/mp4 mp4;
+	}
+	default_type application/octet-stream;
+}
+
+location ~ ^/ {
+	proxy_pass http://127.0.0.1:4200;
+	proxy_http_version 1.1;
+	proxy_set_header Host $host;
+	proxy_set_header X-Real-IP $remote_addr;
+	proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+	proxy_set_header X-Forwarded-Proto $scheme;
+	proxy_set_header Upgrade $http_upgrade;
+	proxy_set_header Connection "upgrade";
+	proxy_set_header Accept-Language $http_accept_language;
+	proxy_set_header i18next $http_i18next;
+	proxy_read_timeout 90s;
+}
+```
+
+**For backend domain :**
+```nginx	
+location ~ ^/ {
+	proxy_pass http://127.0.0.1:3000;
+	proxy_http_version 1.1;
+	proxy_set_header Host $host;
+	proxy_set_header X-Real-IP $remote_addr;
+	proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+	proxy_set_header X-Forwarded-Proto $scheme;
+	proxy_set_header Upgrade $http_upgrade;
+	proxy_set_header Connection "upgrade";
+	proxy_set_header Auth $http_auth;
+	proxy_set_header Showorg $http_showorg;
+	proxy_set_header Impersonate $http_impersonate;
+	proxy_set_header Reload $http_reload;
+	proxy_set_header Onboarding $http_onboarding;
+	proxy_set_header Activate $http_activate;
+	proxy_set_header Accept-Language $http_accept_language;
+	proxy_read_timeout 90s;
+}
+```
+
 ## Proposition concrète (en 3 phases)
 
 **Phase 1 — Valider le besoin**
