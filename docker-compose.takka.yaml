@@ -10,9 +10,12 @@
 #   FRONTEND_URL=https://postiz.takkatech.com
 #   NEXT_PUBLIC_BACKEND_URL=https://postiz-backend.takkatech.com
 #   BACKEND_INTERNAL_URL=http://127.0.0.1:3000
-#   DATABASE_URL=postgresql://postiz-user:postiz-password@127.0.0.1:5432/postiz-db-local
-#   REDIS_URL=redis://127.0.0.1:6379
+#   DATABASE_URL=postgresql://postiz-user:postiz-password@127.0.0.1:5433/postiz-db-local
+#   REDIS_URL=redis://127.0.0.1:6380
 #   TEMPORAL_ADDRESS=127.0.0.1:7233
+#
+# Ports host décalés (5433 / 6380) pour éviter le conflit avec Postgres/Redis
+# déjà installés par Plesk sur 5432 / 6379.
 
 services:
   postiz-postgres:
@@ -26,7 +29,7 @@ services:
     volumes:
       - postgres-volume:/var/lib/postgresql/data
     ports:
-      - '127.0.0.1:5432:5432'
+      - '127.0.0.1:5433:5432'
     networks:
       - postiz-network
     healthcheck:
@@ -47,7 +50,7 @@ services:
     volumes:
       - postiz-redis-data:/data
     ports:
-      - '127.0.0.1:6379:6379'
+      - '127.0.0.1:6380:6379'
     networks:
       - postiz-network
 

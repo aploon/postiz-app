@@ -114,11 +114,12 @@ BACKEND_INTERNAL_URL="http://localhost:3000"
 FRONTEND_URL="https://postiz.takkatech.com"
 NEXT_PUBLIC_BACKEND_URL="https://postiz-backend.takkatech.com"
 BACKEND_INTERNAL_URL="http://127.0.0.1:3000"
-DATABASE_URL="postgresql://postiz-user:postiz-password@127.0.0.1:5432/postiz-db-local"
-REDIS_URL="redis://127.0.0.1:6379"
+DATABASE_URL="postgresql://postiz-user:postiz-password@127.0.0.1:5433/postiz-db-local"
+REDIS_URL="redis://127.0.0.1:6380"
 TEMPORAL_ADDRESS="127.0.0.1:7233"
 ```
 
+Sur Plesk, `5432` / `6379` sont souvent déjà pris : le compose mappe donc **5433** (Postgres) et **6380** (Redis).
 Ne lance pas `postiz-frontend` en même temps que Takka (port 4200).
 
 ### Démarrer — dev
