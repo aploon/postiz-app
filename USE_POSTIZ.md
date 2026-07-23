@@ -125,6 +125,7 @@ Ne lance pas `postiz-frontend` en même temps que Takka (port 4200).
 
 ```bash
 pnpm run docker:takka:dev
+pnpm run prisma-db-push
 pnpm run dev:takka-stack
 ```
 
@@ -138,11 +139,6 @@ pnpm run start:prod:backend
 pnpm run start:prod:orchestrator
 pnpm run start:prod:takka
 ```
-
-Nginx Plesk → `127.0.0.1:4200` (UI) et `127.0.0.1:3000` (API).  
-Public API : voir [`PUBLIC_API.md`](./PUBLIC_API.md).
-
-Plus de détail : [`apps/takka-postiz/README.md`](./apps/takka-postiz/README.md).
 
 ---
 
