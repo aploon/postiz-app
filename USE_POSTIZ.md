@@ -72,38 +72,35 @@ Postiz est en **AGPL-3.0**. Si tu distribues le service (SaaS ou self-hosted), v
 
 ## Stack minimale recommandée
 
-**En développement (source locale) :**
+**Infra Docker Takka**
 
-```bash
-pnpm run dev:docker   # postgres + redis + temporal
-pnpm run --filter postiz-backend --filter postiz-orchestrator --filter takka-postiz --parallel dev
-```
+| Fichier | Usage | Commande |
+|---------|--------|----------|
+| `docker-compose.takka.dev.yaml` | Dev local | `pnpm run docker:takka:dev` |
+| `docker-compose.takka.yaml` | Prod (serveur) | `pnpm run docker:takka` |
 
-**Services Docker indispensables :**
+Services : `postiz-postgres`, `postiz-redis`, `temporal` (+ postgres/ES Temporal).  
+Pas d’image `postiz-app`, pas de pgAdmin / RedisInsight / Temporal UI / Spotlight.
 
-- `postiz-postgres`
-- `postiz-redis`
-- `temporal` + `temporal-postgresql` + `temporal-elasticsearch`
+**Apps Node (hors Docker)**
 
-**Process Node à lancer :**
-
-- `apps/backend`
-- `apps/orchestrator`
-- `apps/takka-postiz` (ou `apps/frontend` si tu restes sur l’UI complète)
+- Dev : `pnpm run dev:takka-stack`
+- Prod : build puis `start:prod:backend` / `start:prod:orchestrator` / `start:prod:takka`
 
 ---
 
 ## Setup et démarrage Takka
 
-Takka (`apps/takka-postiz`) est l’UI sociale réduite : auth, calendrier, canaux, média, analytics, settings (dont clé API Developers), notifications. Même `.env` racine que Postiz.
+Takka (`apps/takka-postiz`) : auth, calendrier, canaux, média, analytics, settings (clé API), notifications.
 
 ### Prérequis
 
-- Node + pnpm (comme le monorepo)
-- Docker pour l’infra (`pnpm run dev:docker`)
-- Fichier `.env` à la racine (partir de `.env.example`)
+- Node + pnpm, Docker
+- `.env` à la racine (partir de `.env.example`)
 
-### Config `.env` utile
+### Config `.env`
+
+**Dev :**
 
 ```env
 FRONTEND_URL="http://localhost:4200"
@@ -111,28 +108,41 @@ NEXT_PUBLIC_BACKEND_URL="http://localhost:3000"
 BACKEND_INTERNAL_URL="http://localhost:3000"
 ```
 
-`FRONTEND_URL` doit pointer vers Takka (CORS, OAuth LinkedIn, etc.). Ne lance **pas** `postiz-frontend` en même temps : les deux utilisent le port **4200**.
+**Prod :**
 
-### Démarrer
-
-```bash
-# 1. Infra
-pnpm run dev:docker
-
-# 2. Backend + orchestrator + Takka
-pnpm run dev:takka-stack
-
-# ou séparément :
-# pnpm run --filter postiz-backend --filter postiz-orchestrator --filter takka-postiz --parallel dev
+```env
+FRONTEND_URL="https://postiz.takkatech.com"
+NEXT_PUBLIC_BACKEND_URL="https://postiz-backend.takkatech.com"
+BACKEND_INTERNAL_URL="http://127.0.0.1:3000"
+DATABASE_URL="postgresql://postiz-user:postiz-password@127.0.0.1:5432/postiz-db-local"
+REDIS_URL="redis://127.0.0.1:6379"
+TEMPORAL_ADDRESS="127.0.0.1:7233"
 ```
 
-UI : http://localhost:4200  
-API : http://localhost:3000  
-Public API : http://localhost:3000/public/v1 (voir [`PUBLIC_API.md`](./PUBLIC_API.md))
+Ne lance pas `postiz-frontend` en même temps que Takka (port 4200).
 
-Redirect OAuth réseaux : basé sur `FRONTEND_URL` (ex. LinkedIn → `http://localhost:4200/integrations/social/linkedin`).
+### Démarrer — dev
 
-Plus de détail scope / commandes : [`apps/takka-postiz/README.md`](./apps/takka-postiz/README.md).
+```bash
+pnpm run docker:takka:dev
+pnpm run dev:takka-stack
+```
+
+### Démarrer — prod
+
+```bash
+pnpm run docker:takka
+pnpm run prisma-db-push
+pnpm --filter postiz-backend --filter postiz-orchestrator --filter takka-postiz run build
+pnpm run start:prod:backend
+pnpm run start:prod:orchestrator
+pnpm run start:prod:takka
+```
+
+Nginx Plesk → `127.0.0.1:4200` (UI) et `127.0.0.1:3000` (API).  
+Public API : voir [`PUBLIC_API.md`](./PUBLIC_API.md).
+
+Plus de détail : [`apps/takka-postiz/README.md`](./apps/takka-postiz/README.md).
 
 ---
 

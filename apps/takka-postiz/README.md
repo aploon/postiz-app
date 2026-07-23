@@ -14,22 +14,20 @@ Social-only scheduling UI based on the Postiz frontend structure.
 
 No agents, AI chat, plugs, third-party marketplace, billing UI, or OAuth Apps for third parties.
 
-## Dev
+## Dev / Prod
 
-Uses the same root `.env` as Postiz (`FRONTEND_URL=http://localhost:4200`, backend URLs, etc.).
-
-Takka listens on **port 4200**, same as `postiz-frontend`. **Do not run both at the same time.**
+Même `.env` racine que Postiz. Port UI **4200** (ne pas lancer `postiz-frontend` en parallèle).
 
 ```bash
-# infra
-pnpm run dev:docker
+# Infra
+pnpm run docker:takka:dev   # local  → docker-compose.takka.dev.yaml
+pnpm run docker:takka       # prod   → docker-compose.takka.yaml
 
-# API + workers + Takka UI
-pnpm run --filter postiz-backend --filter postiz-orchestrator --filter takka-postiz --parallel dev
-# or:
-pnpm run dev:takka-stack
+# Apps
+pnpm run dev:takka-stack                                      # local
+# prod : build + start:prod:backend | orchestrator | takka
 ```
 
-Open: http://localhost:4200
+Détail prod / `.env` : [`USE_POSTIZ.md`](../../USE_POSTIZ.md).
 
-OAuth redirect URIs stay on `FRONTEND_URL` (e.g. LinkedIn: `http://localhost:4200/integrations/social/linkedin`).
+OAuth redirects : basés sur `FRONTEND_URL`.
