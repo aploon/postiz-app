@@ -54,6 +54,7 @@ services:
   temporal-elasticsearch:
     container_name: temporal-elasticsearch
     image: elasticsearch:7.17.27
+    restart: always
     environment:
       - cluster.routing.allocation.disk.threshold_enabled=true
       - cluster.routing.allocation.disk.watermark.low=512mb
@@ -72,6 +73,7 @@ services:
   temporal-postgresql:
     container_name: temporal-postgresql
     image: postgres:16
+    restart: always
     environment:
       POSTGRES_PASSWORD: temporal
       POSTGRES_USER: temporal
@@ -84,6 +86,7 @@ services:
 
   temporal:
     container_name: temporal
+    restart: always
     ports:
       - '127.0.0.1:7233:7233'
     image: temporalio/auto-setup:1.28.1
