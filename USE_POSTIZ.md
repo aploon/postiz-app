@@ -136,23 +136,30 @@ pnpm run dev:takka-stack
 pnpm run docker:takka
 pnpm run prisma-db-push
 pnpm --filter postiz-backend --filter postiz-orchestrator --filter takka-postiz run build
+# Or build separately
+pnpm --filter postiz-backend run build
+pnpm --filter postiz-orchestrator run build
+pnpm --filter takka-postiz run build
+
 # Start apps directly
 pnpm run start:prod:backend
 pnpm run start:prod:orchestrator
 pnpm run start:prod:takka
+
 # Start apps with PM2
 pnpm --filter postiz-backend run pm2
 pnpm --filter postiz-orchestrator run pm2
 pnpm --filter takka-postiz run pm2
+
 # Save and setup PM2 to start at boot
 pm2 save
 pm2 startup
 ```
 
-Chaque script `pm2` du package fait : `pm2 start pnpm --name <app> -- start`  
-→ PM2 lance le script `start` du package (`next start` pour Takka, `node …/main.js` pour backend/orchestrator), avec le `.env` racine via `dotenv`. Restart auto si crash ; `pm2 save` + `pm2 startup` relancent au reboot serveur.
+Chaque script `pm2` du package fait : `pm2 start npm --name <app> -- start`  
+→ PM2 lance le script `start` via **npm** (binaire Node ; `dotenv` + `node`/`next` comme avant). Restart auto si crash ; `pm2 save` + `pm2 startup` pour le boot. Sur ce serveur, `pm2 start pnpm` casse car pendant `pnpm run` le PATH voit un shim shell de pnpm.
 
-Commandes utiles : `pm2 status` · `pm2 logs` · `pm2 restart all`
+Commandes utiles : `pm2 status` · `pm2 logs` · `pm2 restart all` · `pm2 restart <app>` · `pm2 delete all`
 
 ---
 
