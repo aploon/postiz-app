@@ -63,7 +63,7 @@ i18n.cache
 apps/frontend/public/g.js
 
 # uploads directory
-data/postiz/uploads
+/uploads
 
 # Node compile cache (created during builds when NODE_COMPILE_CACHE is set / Node 22+)
 node-compile-cache/
