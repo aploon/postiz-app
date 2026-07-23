@@ -85,7 +85,7 @@ Pas d’image `postiz-app`, pas de pgAdmin / RedisInsight / Temporal UI / Spotli
 **Apps Node (hors Docker)**
 
 - Dev : `pnpm run dev:takka-stack`
-- Prod : build puis `start:prod:backend` / `start:prod:orchestrator` / `start:prod:takka`
+- Prod : build puis `pnpm --filter … run pm2` (ou systemd) — pas `start:prod:*` seuls en SSH
 
 ---
 
@@ -135,10 +135,23 @@ pnpm run dev:takka-stack
 pnpm run docker:takka
 pnpm run prisma-db-push
 pnpm --filter postiz-backend --filter postiz-orchestrator --filter takka-postiz run build
+# Start apps directly
 pnpm run start:prod:backend
 pnpm run start:prod:orchestrator
 pnpm run start:prod:takka
+# Start apps with PM2
+pnpm --filter postiz-backend run pm2
+pnpm --filter postiz-orchestrator run pm2
+pnpm --filter takka-postiz run pm2
+# Save and setup PM2 to start at boot
+pm2 save
+pm2 startup
 ```
+
+Chaque script `pm2` du package fait : `pm2 start pnpm --name <app> -- start`  
+→ PM2 lance le script `start` du package (`next start` pour Takka, `node …/main.js` pour backend/orchestrator), avec le `.env` racine via `dotenv`. Restart auto si crash ; `pm2 save` + `pm2 startup` relancent au reboot serveur.
+
+Commandes utiles : `pm2 status` · `pm2 logs` · `pm2 restart all`
 
 ---
 
