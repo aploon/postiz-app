@@ -69,13 +69,14 @@ const PostRequestForm = ({
   const toaster = useToaster();
   const t = useT();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [documents, setDocuments] = useState<PostRequestDocument[]>(
-    data?.documents || []
-  );
-  const [uploading, setUploading] = useState(false);
+  const [existingDocuments, setExistingDocuments] = useState<
+    PostRequestDocument[]
+  >(data?.documents || []);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [saving, setSaving] = useState(false);
 
   const form = useForm<PostRequestFormValues>({
-    values: {
+    defaultValues: {
       title: data?.title || '',
       description: data?.description || '',
       publishDate: data?.publishDate
@@ -88,97 +89,98 @@ const PostRequestForm = ({
     },
   });
 
-  const uploadDocuments = useCallback(
-    async (files: FileList | null) => {
-      if (!files?.length) {
-        return;
-      }
-      setUploading(true);
-      try {
-        const uploaded: PostRequestDocument[] = [];
-        for (const file of Array.from(files)) {
-          const formData = new FormData();
-          formData.append('file', file, file.name);
-          const result = await (
-            await fetch('/media/upload-simple', {
-              method: 'POST',
-              body: formData,
-            })
-          ).json();
-          uploaded.push({
-            id: result.id,
-            name: result.name || file.name,
-            path: result.path,
-          });
-        }
-        setDocuments((prev) => {
-          const next = [...prev, ...uploaded];
-          form.setValue(
-            'documentIds',
-            next.map((d) => d.id)
-          );
-          return next;
-        });
-      } catch {
-        toaster.show(t('upload_failed', 'Upload failed'), 'warning');
-      } finally {
-        setUploading(false);
-        if (fileRef.current) {
-          fileRef.current.value = '';
-        }
-      }
-    },
-    [fetch, form, t, toaster]
-  );
+  const selectFiles = useCallback((files: FileList | null) => {
+    if (!files?.length) {
+      return;
+    }
+    setPendingFiles((prev) => [...prev, ...Array.from(files)]);
+    if (fileRef.current) {
+      fileRef.current.value = '';
+    }
+  }, []);
 
-  const removeDocument = useCallback(
-    (id: string) => {
-      setDocuments((prev) => {
-        const next = prev.filter((d) => d.id !== id);
-        form.setValue(
-          'documentIds',
-          next.map((d) => d.id)
-        );
-        return next;
-      });
+  const removeExistingDocument = useCallback((id: string) => {
+    setExistingDocuments((prev) => prev.filter((d) => d.id !== id));
+  }, []);
+
+  const removePendingFile = useCallback((index: number) => {
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const uploadFile = useCallback(
+    async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file, file.name);
+      const result = await (
+        await fetch('/media/upload-simple', {
+          method: 'POST',
+          body: formData,
+        })
+      ).json();
+      if (!result?.id) {
+        throw new Error('Upload failed');
+      }
+      return result.id as string;
     },
-    [form]
+    [fetch]
   );
 
   const submit = useCallback(
     async (values: PostRequestFormValues) => {
-      const body = {
-        title: values.title,
-        description: values.description,
-        publishDate: dayjs(values.publishDate).toISOString(),
-        status: values.status,
-        documentIds: values.documentIds,
-      };
-
-      const response = await fetch(
-        data?.id ? `/post-requests/${data.id}` : '/post-requests',
-        {
-          method: data?.id ? 'PUT' : 'POST',
-          body: JSON.stringify(body),
+      setSaving(true);
+      try {
+        const uploadedIds: string[] = [];
+        for (const file of pendingFiles) {
+          uploadedIds.push(await uploadFile(file));
         }
-      );
 
-      if (!response.ok) {
-        toaster.show(
-          t('post_request_save_failed', 'Failed to save post request'),
-          'warning'
+        const documentIds = [
+          ...existingDocuments.map((d) => d.id),
+          ...uploadedIds,
+        ];
+
+        const response = await fetch(
+          data?.id ? `/post-requests/${data.id}` : '/post-requests',
+          {
+            method: data?.id ? 'PUT' : 'POST',
+            body: JSON.stringify({
+              title: values.title,
+              description: values.description,
+              publishDate: dayjs(values.publishDate).toISOString(),
+              status: values.status,
+              documentIds,
+            }),
+          }
         );
-        return;
-      }
 
-      toaster.show(
-        t('post_request_saved', 'Post request saved'),
-        'success'
-      );
-      reload();
-      modal.closeAll();
+        if (!response.ok) {
+          toaster.show(
+            t('post_request_save_failed', 'Failed to save post request'),
+            'warning'
+          );
+          return;
+        }
+
+        toaster.show(t('post_request_saved', 'Post request saved'), 'success');
+        reload();
+        modal.closeAll();
+      } catch {
+        toaster.show(t('upload_failed', 'Upload failed'), 'warning');
+      } finally {
+        setSaving(false);
+      }
     },
-    [data?.id, fetch, modal, reload, t, toaster]
+    [
+      data?.id,
+      existingDocuments,
+      fetch,
+      modal,
+      pendingFiles,
+      reload,
+      t,
+      toaster,
+      uploadFile,
+    ]
   );
 
   return (
@@ -209,14 +211,9 @@ const PostRequestForm = ({
             type="file"
             multiple
             className="text-[13px]"
-            onChange={(e) => uploadDocuments(e.target.files)}
+            onChange={(e) => selectFiles(e.target.files)}
           />
-          {uploading && (
-            <div className="text-[12px] text-customColor18">
-              {t('uploading', 'Uploading...')}
-            </div>
-          )}
-          {documents.map((doc) => (
+          {existingDocuments.map((doc) => (
             <div
               key={doc.id}
               className="flex items-center justify-between gap-[8px] text-[13px]"
@@ -229,7 +226,26 @@ const PostRequestForm = ({
               >
                 {doc.name || doc.path}
               </a>
-              <Button type="button" secondary onClick={() => removeDocument(doc.id)}>
+              <Button
+                type="button"
+                secondary
+                onClick={() => removeExistingDocument(doc.id)}
+              >
+                {t('remove', 'Remove')}
+              </Button>
+            </div>
+          ))}
+          {pendingFiles.map((file, index) => (
+            <div
+              key={`${file.name}-${file.size}-${index}`}
+              className="flex items-center justify-between gap-[8px] text-[13px]"
+            >
+              <span className="truncate">{file.name}</span>
+              <Button
+                type="button"
+                secondary
+                onClick={() => removePendingFile(index)}
+              >
                 {t('remove', 'Remove')}
               </Button>
             </div>
@@ -240,7 +256,9 @@ const PostRequestForm = ({
           <Button type="button" secondary onClick={() => modal.closeAll()}>
             {t('cancel', 'Cancel')}
           </Button>
-          <Button type="submit">{t('save', 'Save')}</Button>
+          <Button type="submit" loading={saving} disabled={saving}>
+            {t('save', 'Save')}
+          </Button>
         </div>
       </form>
     </FormProvider>

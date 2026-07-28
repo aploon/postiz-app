@@ -14,7 +14,7 @@ import React, {
 import { Button } from '@gitroom/react/form/button';
 import useSWR from 'swr';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
-import { hasExtension } from '@gitroom/helpers/utils/has.extension';
+import { isImagePath, isVideoPath } from '@gitroom/helpers/utils/has.extension';
 import { Media } from '@prisma/client';
 import { useMediaDirectory } from '@gitroom/react/helpers/use.media.directory';
 import { useSettings } from '@gitroom/takka-postiz/components/launches/helpers/use.values';
@@ -48,6 +48,83 @@ import {
   NoMediaIcon,
 } from '@gitroom/takka-postiz/components/ui/icons';
 import { useLaunchStore } from '@gitroom/takka-postiz/components/new-launch/store';
+
+const DocumentMediaIcon = () => (
+  <svg
+    width="48"
+    height="48"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="text-textColor opacity-70"
+  >
+    <path
+      d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M14 2V8H20"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M8 13H16M8 17H13"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const MediaPreview: FC<{
+  path?: string | null;
+  className?: string;
+  imgClassName?: string;
+  autoplay?: boolean;
+}> = ({ path, className, imgClassName, autoplay }) => {
+  const mediaDirectory = useMediaDirectory();
+
+  if (isVideoPath(path)) {
+    return (
+      <VideoFrame
+        autoplay={autoplay}
+        url={mediaDirectory.set(path || '')}
+      />
+    );
+  }
+
+  if (isImagePath(path)) {
+    return (
+      <img
+        width="100%"
+        height="100%"
+        className={imgClassName || 'w-full h-full object-cover'}
+        src={mediaDirectory.set(path || '')}
+        alt="media"
+      />
+    );
+  }
+
+  return (
+    <div
+      className={clsx(
+        'w-full h-full flex flex-col items-center justify-center gap-[8px] bg-newBgColorInner',
+        className
+      )}
+    >
+      <DocumentMediaIcon />
+      <div className="text-[11px] uppercase tracking-wide opacity-60 px-[8px] text-center truncate max-w-full">
+        {(path || '').split('.').pop() || 'file'}
+      </div>
+    </div>
+  );
+};
 import { useShallow } from 'zustand/react/shallow';
 import { LoadingComponent } from '@gitroom/takka-postiz/components/layout/loading';
 import { useDebounce } from 'use-debounce';
@@ -345,30 +422,25 @@ export const MediaBox: FC<{
   const maximize = useCallback(
     (media: Media) => async (e: any) => {
       e.stopPropagation();
+      if (!isImagePath(media.path) && !isVideoPath(media.path)) {
+        window.open(mediaDirectory.set(media.path), '_blank');
+        return;
+      }
       modals.openModal({
         title: '',
         top: 10,
         children: (
           <div className="w-full h-full p-[50px]">
-            {hasExtension(media.path, 'mp4') ? (
-              <VideoFrame
-                autoplay={true}
-                url={mediaDirectory.set(media.path)}
-              />
-            ) : (
-              <img
-                width="100%"
-                height="100%"
-                className="w-full h-full max-h-[100%] max-w-[100%] object-cover"
-                src={mediaDirectory.set(media.path)}
-                alt="media"
-              />
-            )}
+            <MediaPreview
+              path={media.path}
+              autoplay={true}
+              imgClassName="w-full h-full max-h-[100%] max-w-[100%] object-cover"
+            />
           </div>
         ),
       });
     },
-    []
+    [mediaDirectory, modals]
   );
 
   const deleteImage = useCallback(
@@ -524,9 +596,9 @@ export const MediaBox: FC<{
             {data?.results
               ?.filter((f: any) => {
                 if (type === 'video') {
-                  return hasExtension(f.path, 'mp4');
+                  return isVideoPath(f.path);
                 } else if (type === 'image') {
-                  return !hasExtension(f.path, 'mp4');
+                  return isImagePath(f.path);
                 }
                 return true;
               })
@@ -578,17 +650,7 @@ export const MediaBox: FC<{
                           </svg>
                         </div>
                       </div>
-                      {hasExtension(media.path, 'mp4') ? (
-                        <VideoFrame url={mediaDirectory.set(media.path)} />
-                      ) : (
-                        <img
-                          width="100%"
-                          height="100%"
-                          className="w-full h-full object-cover"
-                          src={mediaDirectory.set(media.path)}
-                          alt="media"
-                        />
-                      )}
+                      <MediaPreview path={media.path} />
                     </div>
                   </div>
                 </div>
@@ -802,14 +864,10 @@ export const MultiMediaComponent: FC<{
                       >
                         <MediaSettingsIcon className="cursor-pointer relative z-[200]" />
                       </div>
-                      {hasExtension(media?.path, 'mp4') ? (
-                        <VideoFrame url={mediaDirectory.set(media?.path)} />
-                      ) : (
-                        <img
-                          className="w-full h-full object-cover rounded-[4px]"
-                          src={mediaDirectory.set(media?.path)}
-                        />
-                      )}
+                      <MediaPreview
+                        path={media?.path}
+                        imgClassName="w-full h-full object-cover rounded-[4px]"
+                      />
                     </div>
 
                     <CloseCircleIcon
@@ -967,11 +1025,15 @@ export const MediaComponent: FC<{
       <div className="text-[12px]">{description}</div>
       {!!currentMedia && (
         <div className="my-[20px] cursor-pointer w-[200px] h-[200px] border-2 border-tableBorder">
-          <img
-            className="w-full h-full object-cover"
-            src={currentMedia.path}
+          <div
             onClick={() => window.open(mediaDirectory.set(currentMedia.path))}
-          />
+            className="w-full h-full"
+          >
+            <MediaPreview
+              path={currentMedia.path}
+              imgClassName="w-full h-full object-cover"
+            />
+          </div>
         </div>
       )}
       <div className="flex gap-[5px]">
