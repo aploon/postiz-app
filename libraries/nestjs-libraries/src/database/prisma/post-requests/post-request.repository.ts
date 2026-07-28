@@ -24,15 +24,30 @@ export class PostRequestRepository {
     private _media: PrismaRepository<'media'>
   ) {}
 
-  list(orgId: string, createdByUserId?: string) {
-    return this._postRequest.model.postRequest.findMany({
-      where: {
-        organizationId: orgId,
-        ...(createdByUserId ? { createdByUserId } : {}),
-      },
-      include: postRequestInclude,
-      orderBy: { createdAt: 'desc' },
-    });
+  async list(orgId: string, page: number, createdByUserId?: string) {
+    const pageSize = 10;
+    const pageNum = Math.max(0, (page || 1) - 1);
+    const where = {
+      organizationId: orgId,
+      ...(createdByUserId ? { createdByUserId } : {}),
+    };
+
+    const [total, results] = await Promise.all([
+      this._postRequest.model.postRequest.count({ where }),
+      this._postRequest.model.postRequest.findMany({
+        where,
+        include: postRequestInclude,
+        orderBy: { createdAt: 'desc' },
+        skip: pageNum * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    return {
+      results,
+      pages: Math.max(1, Math.ceil(total / pageSize)),
+      total,
+    };
   }
 
   getById(orgId: string, id: string, createdByUserId?: string) {

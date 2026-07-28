@@ -20,9 +20,9 @@ const EDITABLE_STATUSES: PostRequestStatus[] = [
 export class PostRequestService {
   constructor(private _postRequestRepository: PostRequestRepository) {}
 
-  list(org: Organization, user: User) {
+  list(org: Organization, user: User, page = 1) {
     const createdByUserId = this.isRestrictedUser(org) ? user.id : undefined;
-    return this._postRequestRepository.list(org.id, createdByUserId);
+    return this._postRequestRepository.list(org.id, page, createdByUserId);
   }
 
   async get(org: Organization, user: User, id: string) {

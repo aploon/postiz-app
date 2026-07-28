@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Organization, User } from '@prisma/client';
@@ -27,9 +28,10 @@ export class PostRequestsController {
   @Get('/')
   async list(
     @GetOrgFromRequest() org: Organization,
-    @GetUserFromRequest() user: User
+    @GetUserFromRequest() user: User,
+    @Query('page') page = '1'
   ) {
-    return this._postRequestService.list(org, user);
+    return this._postRequestService.list(org, user, Number(page) || 1);
   }
 
   @Get('/:id')

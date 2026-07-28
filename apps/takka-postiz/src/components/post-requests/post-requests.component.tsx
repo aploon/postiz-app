@@ -13,6 +13,7 @@ import { useToaster } from '@gitroom/react/toaster/toaster';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import { useUser } from '@gitroom/takka-postiz/components/layout/user.context';
+import { Pagination } from '@gitroom/takka-postiz/components/media/media.component';
 import dayjs from 'dayjs';
 import clsx from 'clsx';
 
@@ -86,20 +87,24 @@ const ActionButton = ({
   </button>
 );
 
-const usePostRequests = () => {
+const usePostRequests = (page: number) => {
   const fetch = useFetch();
   const load = useCallback(async () => {
-    return (await fetch('/post-requests')).json();
-  }, [fetch]);
+    return (await fetch(`/post-requests?page=${page + 1}`)).json();
+  }, [fetch, page]);
 
-  return useSWR<PostRequestItem[]>('post-requests', load, {
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-    revalidateIfStale: false,
-    revalidateOnMount: true,
-    refreshWhenHidden: false,
-    refreshWhenOffline: false,
-  });
+  return useSWR<{ results: PostRequestItem[]; pages: number; total: number }>(
+    `post-requests-${page}`,
+    load,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      revalidateIfStale: false,
+      revalidateOnMount: true,
+      refreshWhenHidden: false,
+      refreshWhenOffline: false,
+    }
+  );
 };
 
 const PostRequestForm = ({
@@ -398,7 +403,9 @@ export const PostRequestsComponent = () => {
   const toaster = useToaster();
   const fetch = useFetch();
   const user = useUser();
-  const { data, mutate, isLoading } = usePostRequests();
+  const [page, setPage] = useState(0);
+  const { data, mutate, isLoading } = usePostRequests(page);
+  const results = data?.results || [];
 
   const openForm = useCallback(
     (item?: PostRequestItem) => () => {
@@ -468,11 +475,6 @@ export const PostRequestsComponent = () => {
         <div>
           <h1 className="text-[24px] font-[600]">
             {t('post_requests', 'Post Requests')}
-            {!!data?.length && (
-              <span className="ms-[8px] text-[14px] font-[500] text-newTableText">
-                ({data.length})
-              </span>
-            )}
           </h1>
           <p className="text-newTableText text-[14px] mt-[4px]">
             {t(
@@ -492,12 +494,12 @@ export const PostRequestsComponent = () => {
             {t('loading', 'Loading...')}
           </div>
         )}
-        {!isLoading && !data?.length && (
+        {!isLoading && !results.length && (
           <div className="px-[16px] py-[32px] text-center text-newTableText text-[14px]">
             {t('no_post_requests', 'No post requests yet.')}
           </div>
         )}
-        {!!data?.length && (
+        {!!results.length && (
           <>
             <div
               className={clsx(
@@ -511,7 +513,7 @@ export const PostRequestsComponent = () => {
               {showCreator && <div>{t('created_by', 'Created by')}</div>}
               <div className="text-end">{t('actions', 'Actions')}</div>
             </div>
-            {data.map((item) => {
+            {results.map((item) => {
               const canEdit = EDITABLE.includes(item.status);
               return (
                 <div
@@ -561,6 +563,14 @@ export const PostRequestsComponent = () => {
           </>
         )}
       </div>
+
+      {(data?.pages || 0) > 1 && (
+        <Pagination
+          current={page}
+          totalPages={data?.pages || 1}
+          setPage={setPage}
+        />
+      )}
     </div>
   );
 };
