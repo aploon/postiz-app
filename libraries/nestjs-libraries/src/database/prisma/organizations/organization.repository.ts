@@ -164,6 +164,21 @@ export class OrganizationRepository {
     });
   }
 
+  updateName(orgId: string, name: string) {
+    return this._organization.model.organization.update({
+      where: {
+        id: orgId,
+      },
+      data: {
+        name,
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+  }
+
   async getOrgsByUserId(userId: string) {
     return this._organization.model.organization.findMany({
       where: {

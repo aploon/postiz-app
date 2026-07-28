@@ -26,6 +26,10 @@ export class CreatePostRequestDto {
   @IsArray()
   @IsString({ each: true })
   documentIds?: string[];
+
+  @IsOptional()
+  @IsIn(['DRAFT', 'REQUESTED'])
+  status?: 'DRAFT' | 'REQUESTED';
 }
 
 export class UpdatePostRequestDto {

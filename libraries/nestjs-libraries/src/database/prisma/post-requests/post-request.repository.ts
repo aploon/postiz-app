@@ -24,17 +24,24 @@ export class PostRequestRepository {
     private _media: PrismaRepository<'media'>
   ) {}
 
-  list(orgId: string) {
+  list(orgId: string, createdByUserId?: string) {
     return this._postRequest.model.postRequest.findMany({
-      where: { organizationId: orgId },
+      where: {
+        organizationId: orgId,
+        ...(createdByUserId ? { createdByUserId } : {}),
+      },
       include: postRequestInclude,
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  getById(orgId: string, id: string) {
+  getById(orgId: string, id: string, createdByUserId?: string) {
     return this._postRequest.model.postRequest.findFirst({
-      where: { id, organizationId: orgId },
+      where: {
+        id,
+        organizationId: orgId,
+        ...(createdByUserId ? { createdByUserId } : {}),
+      },
       include: postRequestInclude,
     });
   }
@@ -52,7 +59,9 @@ export class PostRequestRepository {
         title: body.title,
         description: body.description,
         publishDate: new Date(body.publishDate),
-        status: PostRequestStatus.DRAFT,
+        status: body.status === 'REQUESTED'
+          ? PostRequestStatus.REQUESTED
+          : PostRequestStatus.DRAFT,
         organizationId: orgId,
         createdByUserId: userId,
       },

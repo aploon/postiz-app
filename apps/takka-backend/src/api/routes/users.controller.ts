@@ -24,6 +24,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { UsersService } from '@gitroom/nestjs-libraries/database/prisma/users/users.service';
 import { UserDetailDto } from '@gitroom/nestjs-libraries/dtos/users/user.details.dto';
 import { EmailNotificationsDto } from '@gitroom/nestjs-libraries/dtos/users/email-notifications.dto';
+import { ChangePasswordDto } from '@gitroom/nestjs-libraries/dtos/auth/change.password.dto';
 import { HttpForbiddenException } from '@gitroom/nestjs-libraries/services/exception.filter';
 import { RealIP } from 'nestjs-real-ip';
 import { UserAgent } from '@gitroom/nestjs-libraries/user/user.agent';
@@ -140,8 +141,19 @@ export class UsersController {
   }
 
   @Get('/personal')
-  async getPersonalInformation(@GetUserFromRequest() user: User) {
-    return this._userService.getPersonal(user.id);
+  async getPersonalInformation(
+    @GetUserFromRequest() user: User,
+    @GetOrgFromRequest() organization: Organization
+  ) {
+    return this._userService.getPersonal(user.id, organization.id);
+  }
+
+  @Post('/change-password')
+  async changePassword(
+    @GetUserFromRequest() user: User,
+    @Body() body: ChangePasswordDto
+  ) {
+    return this._userService.changePassword(user.id, body);
   }
 
   @Get('/impersonate')

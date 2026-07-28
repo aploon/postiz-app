@@ -5,6 +5,7 @@ import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import dynamic from 'next/dynamic';
 import EmailNotificationsComponent from '@gitroom/takka-postiz/components/settings/email-notifications.component';
 import ShortlinkPreferenceComponent from '@gitroom/takka-postiz/components/settings/shortlink-preference.component';
+import AccountSettingsComponent from '@gitroom/takka-postiz/components/settings/account.settings.component';
 
 const MetricComponent = dynamic(
   () => import('@gitroom/takka-postiz/components/settings/metric.component'),
@@ -18,6 +19,7 @@ export const GlobalSettings = () => {
   return (
     <div className="flex flex-col">
       <h3 className="text-[20px]">{t('global_settings', 'Global Settings')}</h3>
+      <AccountSettingsComponent />
       <MetricComponent />
       <EmailNotificationsComponent />
       <ShortlinkPreferenceComponent />

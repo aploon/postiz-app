@@ -8,14 +8,18 @@ import {
 
 export class UserDetailDto {
   @IsString()
-  @MinLength(3)
-  fullname: string;
+  @MinLength(1)
+  name: string;
 
   @IsString()
   @IsOptional()
-  bio: string;
+  lastName?: string;
+
+  @IsString()
+  @IsOptional()
+  bio?: string;
 
   @IsOptional()
   @ValidateNested()
-  picture: MediaDto;
+  picture?: MediaDto;
 }

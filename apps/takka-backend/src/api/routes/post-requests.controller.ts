@@ -25,16 +25,20 @@ export class PostRequestsController {
   constructor(private _postRequestService: PostRequestService) {}
 
   @Get('/')
-  async list(@GetOrgFromRequest() org: Organization) {
-    return this._postRequestService.list(org.id);
+  async list(
+    @GetOrgFromRequest() org: Organization,
+    @GetUserFromRequest() user: User
+  ) {
+    return this._postRequestService.list(org, user);
   }
 
   @Get('/:id')
   async get(
     @GetOrgFromRequest() org: Organization,
+    @GetUserFromRequest() user: User,
     @Param('id') id: string
   ) {
-    return this._postRequestService.get(org.id, id);
+    return this._postRequestService.get(org, user, id);
   }
 
   @Post('/')
@@ -49,18 +53,20 @@ export class PostRequestsController {
   @Put('/:id')
   async update(
     @GetOrgFromRequest() org: Organization,
+    @GetUserFromRequest() user: User,
     @Param('id') id: string,
     @Body() body: UpdatePostRequestDto
   ) {
-    return this._postRequestService.update(org.id, id, body);
+    return this._postRequestService.update(org, user, id, body);
   }
 
   @Delete('/:id')
   async delete(
     @GetOrgFromRequest() org: Organization,
+    @GetUserFromRequest() user: User,
     @Param('id') id: string
   ) {
-    return this._postRequestService.delete(org.id, id);
+    return this._postRequestService.delete(org, user, id);
   }
 
   @Patch('/:id/status')

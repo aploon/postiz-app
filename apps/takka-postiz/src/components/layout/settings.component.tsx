@@ -1,21 +1,7 @@
 'use client';
 
 import { useModals } from '@gitroom/takka-postiz/components/layout/new-modal';
-import React, {
-  FC,
-  Ref,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
-import { showMediaBox } from '@gitroom/takka-postiz/components/media/media.component';
-import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
-import { classValidatorResolver } from '@hookform/resolvers/class-validator';
-import { UserDetailDto } from '@gitroom/nestjs-libraries/dtos/users/user.details.dto';
-import { useToaster } from '@gitroom/react/toaster/toaster';
-import { useSWRConfig } from 'swr';
+import React, { FC, Ref, useCallback, useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { TeamsComponent } from '@gitroom/takka-postiz/components/settings/teams.component';
 import { useUser } from '@gitroom/takka-postiz/components/layout/user.context';
@@ -27,58 +13,17 @@ import Link from 'next/link';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { SVGLine } from '@gitroom/takka-postiz/components/launches/launches.component';
 import { GlobalSettings } from '@gitroom/takka-postiz/components/settings/global.settings';
+
 export const SettingsPopup: FC<{
   getRef?: Ref<any>;
 }> = (props) => {
   const { isGeneral } = useVariables();
-  const { getRef } = props;
-  const fetch = useFetch();
-  const toast = useToaster();
-  const swr = useSWRConfig();
   const user = useUser();
-  const resolver = useMemo(() => {
-    return classValidatorResolver(UserDetailDto);
-  }, []);
-  const form = useForm({
-    resolver,
-  });
-  const picture = form.watch('picture');
-  const modal = useModals();
-  const close = useCallback(() => {
-    return modal.closeAll();
-  }, []);
   const url = useSearchParams();
   const showLogout = !url.get('onboarding') || user?.tier?.current === 'FREE';
-  const loadProfile = useCallback(async () => {
-    const personal = await (await fetch('/user/personal')).json();
-    form.setValue('fullname', personal.name || '');
-    form.setValue('bio', personal.bio || '');
-    form.setValue('picture', personal.picture);
-  }, []);
-  const openMedia = useCallback(() => {
-    showMediaBox((values) => {
-      form.setValue('picture', values);
-    });
-  }, []);
-  const remove = useCallback(() => {
-    form.setValue('picture', null);
-  }, []);
-
-  const submit = useCallback(async (val: any) => {
-    await fetch('/user/personal', {
-      method: 'POST',
-      body: JSON.stringify(val),
-    });
-    if (getRef) {
-      return;
-    }
-    toast.show(t('profile_updated', 'Profile updated'));
-    close();
-  }, []);
-
   const [tab, setTab] = useState('global_settings');
-
   const t = useT();
+
   const list = useMemo(() => {
     const arr = [];
     const role = user?.role;
@@ -88,11 +33,7 @@ export const SettingsPopup: FC<{
       label: t('global_settings', 'Global Settings'),
     });
 
-    if (
-      role !== 'USER' &&
-      user?.tier?.team_members &&
-      isGeneral
-    ) {
+    if (role !== 'USER' && user?.tier?.team_members && isGeneral) {
       arr.push({ tab: 'teams', label: t('teams', 'Teams') });
     }
 
@@ -107,10 +48,6 @@ export const SettingsPopup: FC<{
 
     return arr;
   }, [user, isGeneral, showLogout, t]);
-
-  useEffect(() => {
-    loadProfile();
-  }, []);
 
   return (
     <>
@@ -146,42 +83,31 @@ export const SettingsPopup: FC<{
         </div>
       </div>
       <div className="bg-newBgColorInner flex-1 flex-col flex p-[20px] gap-[12px]">
-        <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit(submit)}>
-            {!!getRef && (
-              <button type="submit" className="hidden" ref={getRef}></button>
-            )}
-            <div
-              className={clsx(
-                'w-full mx-auto gap-[24px] flex flex-col relative',
-                !getRef && 'rounded-[4px]'
-              )}
-            >
-              {tab === 'global_settings' && (
-                <div>
-                  <GlobalSettings />
-                </div>
-              )}
-              {tab === 'teams' && !!user?.tier?.team_members && isGeneral && (
-                <div>
-                  <TeamsComponent />
-                </div>
-              )}
-              {tab === 'api' &&
-                !!user?.tier?.public_api &&
-                isGeneral &&
-                showLogout && (
-                  <div>
-                    <PublicComponent />
-                  </div>
-                )}
+        <div className="w-full mx-auto gap-[24px] flex flex-col relative rounded-[4px]">
+          {tab === 'global_settings' && (
+            <div>
+              <GlobalSettings />
             </div>
-          </form>
-        </FormProvider>
+          )}
+          {tab === 'teams' && !!user?.tier?.team_members && isGeneral && (
+            <div>
+              <TeamsComponent />
+            </div>
+          )}
+          {tab === 'api' &&
+            !!user?.tier?.public_api &&
+            isGeneral &&
+            showLogout && (
+              <div>
+                <PublicComponent />
+              </div>
+            )}
+        </div>
       </div>
     </>
   );
 };
+
 export const SettingsComponent = () => {
   const settings = useModals();
   const user = useUser();

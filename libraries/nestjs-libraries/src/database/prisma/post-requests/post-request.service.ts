@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PostRequestStatus, User } from '@prisma/client';
+import { Organization, PostRequestStatus, User } from '@prisma/client';
 import { PostRequestRepository } from '@gitroom/nestjs-libraries/database/prisma/post-requests/post-request.repository';
 import {
   CreatePostRequestDto,
@@ -20,12 +20,18 @@ const EDITABLE_STATUSES: PostRequestStatus[] = [
 export class PostRequestService {
   constructor(private _postRequestRepository: PostRequestRepository) {}
 
-  list(orgId: string) {
-    return this._postRequestRepository.list(orgId);
+  list(org: Organization, user: User) {
+    const createdByUserId = this.isRestrictedUser(org) ? user.id : undefined;
+    return this._postRequestRepository.list(org.id, createdByUserId);
   }
 
-  async get(orgId: string, id: string) {
-    const postRequest = await this._postRequestRepository.getById(orgId, id);
+  async get(org: Organization, user: User, id: string) {
+    const createdByUserId = this.isRestrictedUser(org) ? user.id : undefined;
+    const postRequest = await this._postRequestRepository.getById(
+      org.id,
+      id,
+      createdByUserId
+    );
     if (!postRequest) {
       throw new NotFoundException('Post request not found');
     }
@@ -36,26 +42,23 @@ export class PostRequestService {
     return this._postRequestRepository.create(orgId, userId, body);
   }
 
-  async update(orgId: string, id: string, body: UpdatePostRequestDto) {
-    const postRequest = await this._postRequestRepository.getById(orgId, id);
-    if (!postRequest) {
-      throw new NotFoundException('Post request not found');
-    }
-
+  async update(
+    org: Organization,
+    user: User,
+    id: string,
+    body: UpdatePostRequestDto
+  ) {
+    const postRequest = await this.getOwnedEditable(org, user, id);
     this.assertEditable(postRequest.status);
 
-    return this._postRequestRepository.update(orgId, id, body);
+    return this._postRequestRepository.update(org.id, id, body);
   }
 
-  async delete(orgId: string, id: string) {
-    const postRequest = await this._postRequestRepository.getById(orgId, id);
-    if (!postRequest) {
-      throw new NotFoundException('Post request not found');
-    }
-
+  async delete(org: Organization, user: User, id: string) {
+    const postRequest = await this.getOwnedEditable(org, user, id);
     this.assertEditable(postRequest.status);
 
-    return this._postRequestRepository.delete(orgId, id);
+    return this._postRequestRepository.delete(org.id, id);
   }
 
   async updateStatus(user: User, id: string, status: PostRequestStatus) {
@@ -69,6 +72,24 @@ export class PostRequestService {
     }
 
     return this._postRequestRepository.updateStatus(id, status);
+  }
+
+  private async getOwnedEditable(org: Organization, user: User, id: string) {
+    const createdByUserId = this.isRestrictedUser(org) ? user.id : undefined;
+    const postRequest = await this._postRequestRepository.getById(
+      org.id,
+      id,
+      createdByUserId
+    );
+    if (!postRequest) {
+      throw new NotFoundException('Post request not found');
+    }
+    return postRequest;
+  }
+
+  private isRestrictedUser(org: Organization) {
+    // @ts-ignore
+    return org?.users?.[0]?.role === 'USER';
   }
 
   private assertEditable(status: PostRequestStatus) {

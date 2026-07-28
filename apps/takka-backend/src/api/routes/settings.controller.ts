@@ -5,6 +5,7 @@ import { CheckPolicies } from '@gitroom/takka-backend/services/auth/permissions/
 import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
 import { AddTeamMemberDto } from '@gitroom/nestjs-libraries/dtos/settings/add.team.member.dto';
 import { ShortlinkPreferenceDto } from '@gitroom/nestjs-libraries/dtos/settings/shortlink-preference.dto';
+import { UpdateOrganizationDto } from '@gitroom/nestjs-libraries/dtos/settings/update.organization.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthorizationActions, Sections } from '@gitroom/takka-backend/services/auth/permissions/permission.exception.class';
 
@@ -63,5 +64,14 @@ export class SettingsController {
       org.id,
       body.shortlink
     );
+  }
+
+  @Post('/organization')
+  @CheckPolicies([AuthorizationActions.Create, Sections.ADMIN])
+  async updateOrganization(
+    @GetOrgFromRequest() org: Organization,
+    @Body() body: UpdateOrganizationDto
+  ) {
+    return this._organizationService.updateName(org.id, body.name);
   }
 }
