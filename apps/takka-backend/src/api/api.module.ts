@@ -28,6 +28,7 @@ import { WebhookController } from '@gitroom/takka-backend/api/routes/webhooks.co
 import { SignatureController } from '@gitroom/takka-backend/api/routes/signature.controller';
 import { AutopostController } from '@gitroom/takka-backend/api/routes/autopost.controller';
 import { SetsController } from '@gitroom/takka-backend/api/routes/sets.controller';
+import { PostRequestsController } from '@gitroom/takka-backend/api/routes/post-requests.controller';
 import { ThirdPartyController } from '@gitroom/takka-backend/api/routes/third-party.controller';
 import { MonitorController } from '@gitroom/takka-backend/api/routes/monitor.controller';
 import { NoAuthIntegrationsController } from '@gitroom/takka-backend/api/routes/no.auth.integrations.controller';
@@ -58,6 +59,7 @@ const authenticatedController = [
   SignatureController,
   AutopostController,
   SetsController,
+  PostRequestsController,
   ThirdPartyController,
   OAuthAppController,
   ApprovedAppsController,

@@ -85,6 +85,7 @@ model User {
   name                  String?
   lastName              String?
   isSuperAdmin          Boolean              @default(false)
+  isTakkaAdmin          Boolean              @default(false)
   bio                   String?
   audience              Int                  @default(0)
   pictureId             String?
@@ -223,6 +224,8 @@ model Media {
   alt                String?
   thumbnailTimestamp Int?
   organization       Organization        @relation(fields: [organizationId], references: [id])
+  postRequestId      String?
+  postRequest        PostRequest?        @relation(fields: [postRequestId], references: [id])
   agencies           SocialMediaAgency[]
   userPicture        User[]
   oauthApps          OAuthApp[]
@@ -230,6 +233,7 @@ model Media {
   @@index([name])
   @@index([organizationId])
   @@index([type])
+  @@index([postRequestId])
 }
 
 model SocialMediaAgency {
@@ -984,6 +988,7 @@ model PostRequest {
   updatedAt       DateTime          @updatedAt
   organization    Organization      @relation(fields: [organizationId], references: [id])
   createdBy       User              @relation(fields: [createdByUserId], references: [id])
+  documents       Media[]
 
   @@index([organizationId])
   @@index([createdByUserId])
