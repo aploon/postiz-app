@@ -12,6 +12,7 @@ import { Response, Request } from 'express';
 
 import { CreateOrgUserDto } from '@gitroom/nestjs-libraries/dtos/auth/create.org.user.dto';
 import { LoginUserDto } from '@gitroom/nestjs-libraries/dtos/auth/login.user.dto';
+import { RegisterTakkaAdminDto } from '@gitroom/nestjs-libraries/dtos/auth/register.takka.admin.dto';
 import { AuthService } from '@gitroom/takka-backend/services/auth/auth.service';
 import { ForgotReturnPasswordDto } from '@gitroom/nestjs-libraries/dtos/auth/forgot-return.password.dto';
 import { ForgotPasswordDto } from '@gitroom/nestjs-libraries/dtos/auth/forgot.password.dto';
@@ -101,6 +102,70 @@ export class AuthController {
         if (process.env.NOT_SECURED) {
           response.header('showorg', addedOrg.organizationId);
         }
+      }
+
+      Sentry.metrics.count('new_user', 1);
+      response.header('onboarding', 'true');
+      response.status(200).json({
+        register: true,
+      });
+    } catch (e: any) {
+      response.status(400).send(e.message);
+    }
+  }
+
+  @Post('/register-takka-admin')
+  async registerTakkaAdmin(
+    @Body() body: RegisterTakkaAdminDto,
+    @Res({ passthrough: false }) response: Response,
+    @RealIP() ip: string,
+    @UserAgent() userAgent: string
+  ) {
+    try {
+      const { jwt, organizationId } = await this._authService.registerTakkaAdmin(
+        body,
+        ip,
+        userAgent
+      );
+
+      const activationRequired = this._emailService.hasProvider();
+
+      if (activationRequired) {
+        response.header('activate', 'true');
+        response.status(200).json({ activate: true });
+        return;
+      }
+
+      response.cookie('auth', jwt, {
+        domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
+        ...(!process.env.NOT_SECURED
+          ? {
+              secure: true,
+              httpOnly: true,
+              sameSite: 'none',
+            }
+          : {}),
+        expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+      });
+
+      if (process.env.NOT_SECURED) {
+        response.header('auth', jwt);
+      }
+
+      response.cookie('showorg', organizationId, {
+        domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
+        ...(!process.env.NOT_SECURED
+          ? {
+              secure: true,
+              httpOnly: true,
+              sameSite: 'none',
+            }
+          : {}),
+        expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+      });
+
+      if (process.env.NOT_SECURED) {
+        response.header('showorg', organizationId);
       }
 
       Sentry.metrics.count('new_user', 1);

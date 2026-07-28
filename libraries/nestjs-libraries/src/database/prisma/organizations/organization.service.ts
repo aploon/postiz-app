@@ -130,4 +130,17 @@ export class OrganizationService {
       shortlink
     );
   }
+
+  createTakkaAdminUser(
+    body: { email: string; password: string },
+    ip: string,
+    userAgent: string
+  ) {
+    return this._organizationRepository.createTakkaAdminUser(
+      body,
+      this._notificationsService.hasEmailProvider(),
+      ip,
+      userAgent
+    );
+  }
 }

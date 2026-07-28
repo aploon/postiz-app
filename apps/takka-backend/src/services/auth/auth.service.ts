@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Provider, User } from '@prisma/client';
 import { CreateOrgUserDto } from '@gitroom/nestjs-libraries/dtos/auth/create.org.user.dto';
 import { LoginUserDto } from '@gitroom/nestjs-libraries/dtos/auth/login.user.dto';
+import { RegisterTakkaAdminDto } from '@gitroom/nestjs-libraries/dtos/auth/register.takka.admin.dto';
 import { UsersService } from '@gitroom/nestjs-libraries/database/prisma/users/users.service';
 import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
 import { AuthService as AuthChecker } from '@gitroom/helpers/auth/auth.service';
@@ -316,5 +317,55 @@ export class AuthService {
       delete user.password;
     }
     return AuthChecker.signJWT(user);
+  }
+
+  async registerTakkaAdmin(
+    body: RegisterTakkaAdminDto,
+    ip: string,
+    userAgent: string
+  ) {
+    if (process.env.DISALLOW_PLUS && body.email.includes('+')) {
+      throw new Error('Email with plus sign is not allowed');
+    }
+
+    const email = body.email.toLowerCase();
+    const existing = await this._userService.getUserByEmail(email);
+    if (existing) {
+      throw new Error('Email already exists');
+    }
+
+    if (!(await this.canRegister(Provider.LOCAL))) {
+      throw new Error('Registration is disabled');
+    }
+
+    const create = await this._organizationService.createTakkaAdminUser(
+      {
+        email,
+        password: body.password,
+      },
+      ip,
+      userAgent
+    );
+
+    this._track(
+      'register',
+      email,
+      body.datafast_visitor_id || ''
+    ).catch(() => {});
+
+    await NewsletterService.register(email);
+
+    const jwt = await this.jwt(create.user);
+    await this._emailService.sendEmail(
+      email,
+      'Activate your account',
+      `Click <a href="${process.env.FRONTEND_URL}/auth/activate/${jwt}">here</a> to activate your account`,
+      'top'
+    );
+
+    return {
+      jwt,
+      organizationId: create.organization.id,
+    };
   }
 }

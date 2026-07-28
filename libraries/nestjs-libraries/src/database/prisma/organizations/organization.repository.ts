@@ -419,4 +419,56 @@ export class OrganizationRepository {
       },
     });
   }
+
+  async ensureTakkatechOrganization() {
+    const existing = await this._organization.model.organization.findFirst({
+      where: { name: 'Takkatech' },
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    return this._organization.model.organization.create({
+      data: {
+        name: 'Takkatech',
+        apiKey: AuthService.fixedEncryption(makeId(20)),
+        allowTrial: true,
+        isTrailing: true,
+      },
+    });
+  }
+
+  async createTakkaAdminUser(
+    body: { email: string; password: string },
+    hasEmail: boolean,
+    ip: string,
+    userAgent: string
+  ) {
+    const organization = await this.ensureTakkatechOrganization();
+
+    const user = await this._user.model.user.create({
+      data: {
+        activated: !hasEmail,
+        email: body.email,
+        password: AuthService.hashPassword(body.password),
+        providerName: 'LOCAL',
+        providerId: '',
+        timezone: 0,
+        ip,
+        agent: userAgent,
+        isTakkaAdmin: true,
+      },
+    });
+
+    await this._userOrg.model.userOrganization.create({
+      data: {
+        role: Role.SUPERADMIN,
+        userId: user.id,
+        organizationId: organization.id,
+      },
+    });
+
+    return { organization, user };
+  }
 }

@@ -15,6 +15,14 @@ const ALLOWED_MIME_TYPES = new Set<string>([
   'image/bmp',
   'image/tiff',
   'video/mp4',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
 ]);
 
 @Injectable()
@@ -62,6 +70,8 @@ export function getMaxSize(mimeType: string): number {
     return 10 * 1024 * 1024; // 10 MB
   } else if (mimeType.startsWith('video/')) {
     return 1024 * 1024 * 1024; // 1 GB
+  } else if (ALLOWED_MIME_TYPES.has(mimeType)) {
+    return 25 * 1024 * 1024; // 25 MB for documents
   } else {
     throw new BadRequestException('Unsupported file type.');
   }
