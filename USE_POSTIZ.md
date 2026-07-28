@@ -72,38 +72,35 @@ Postiz est en **AGPL-3.0**. Si tu distribues le service (SaaS ou self-hosted), v
 
 ## Stack minimale recommandée
 
-**En développement (source locale) :**
+**Infra Docker Takka**
 
-```bash
-pnpm run dev:docker   # postgres + redis + temporal
-pnpm run --filter postiz-backend --filter postiz-orchestrator --filter takka-postiz --parallel dev
-```
+| Fichier | Usage | Commande |
+|---------|--------|----------|
+| `docker-compose.takka.dev.yaml` | Dev local | `pnpm run docker:takka:dev` |
+| `docker-compose.takka.yaml` | Prod (serveur) | `pnpm run docker:takka` |
 
-**Services Docker indispensables :**
+Services : `postiz-postgres`, `postiz-redis`, `temporal` (+ postgres/ES Temporal).  
+Pas d’image `postiz-app`, pas de pgAdmin / RedisInsight / Temporal UI / Spotlight.
 
-- `postiz-postgres`
-- `postiz-redis`
-- `temporal` + `temporal-postgresql` + `temporal-elasticsearch`
+**Apps Node (hors Docker)**
 
-**Process Node à lancer :**
-
-- `apps/backend`
-- `apps/orchestrator`
-- `apps/takka-postiz` (ou `apps/frontend` si tu restes sur l’UI complète)
+- Dev : `pnpm run dev:takka-stack`
+- Prod : build puis `pnpm --filter … run pm2` (ou systemd) — pas `start:prod:*` seuls en SSH
 
 ---
 
 ## Setup et démarrage Takka
 
-Takka (`apps/takka-postiz`) est l’UI sociale réduite : auth, calendrier, canaux, média, analytics, settings (dont clé API Developers), notifications. Même `.env` racine que Postiz.
+Takka (`apps/takka-postiz`) : auth, calendrier, canaux, média, analytics, settings (clé API), notifications.
 
 ### Prérequis
 
-- Node + pnpm (comme le monorepo)
-- Docker pour l’infra (`pnpm run dev:docker`)
-- Fichier `.env` à la racine (partir de `.env.example`)
+- Node + pnpm, Docker
+- `.env` à la racine (partir de `.env.example`)
 
-### Config `.env` utile
+### Config `.env`
+
+**Dev :**
 
 ```env
 FRONTEND_URL="http://localhost:4200"
@@ -111,30 +108,113 @@ NEXT_PUBLIC_BACKEND_URL="http://localhost:3000"
 BACKEND_INTERNAL_URL="http://localhost:3000"
 ```
 
-`FRONTEND_URL` doit pointer vers Takka (CORS, OAuth LinkedIn, etc.). Ne lance **pas** `postiz-frontend` en même temps : les deux utilisent le port **4200**.
+**Prod :**
 
-### Démarrer
-
-```bash
-# 1. Infra
-pnpm run dev:docker
-
-# 2. Backend + orchestrator + Takka
-pnpm run dev:takka-stack
-
-# ou séparément :
-# pnpm run --filter postiz-backend --filter postiz-orchestrator --filter takka-postiz --parallel dev
+```env
+FRONTEND_URL="https://postiz.takkatech.com"
+NEXT_PUBLIC_BACKEND_URL="https://postiz-backend.takkatech.com"
+BACKEND_INTERNAL_URL="http://127.0.0.1:3000"
+DATABASE_URL="postgresql://postiz-user:postiz-password@127.0.0.1:5433/postiz-db-local"
+REDIS_URL="redis://127.0.0.1:6380"
+TEMPORAL_ADDRESS="127.0.0.1:7233"
 ```
 
-UI : http://localhost:4200  
-API : http://localhost:3000  
-Public API : http://localhost:3000/public/v1 (voir [`PUBLIC_API.md`](./PUBLIC_API.md))
+Sur Plesk, `5432` / `6379` sont souvent déjà pris : le compose mappe donc **5433** (Postgres) et **6380** (Redis).
+Ne lance pas `postiz-frontend` en même temps que Takka (port 4200).
 
-Redirect OAuth réseaux : basé sur `FRONTEND_URL` (ex. LinkedIn → `http://localhost:4200/integrations/social/linkedin`).
+### Démarrer — dev
 
-Plus de détail scope / commandes : [`apps/takka-postiz/README.md`](./apps/takka-postiz/README.md).
+```bash
+pnpm run docker:takka:dev
+pnpm run prisma-db-push
+pnpm run dev:takka-stack
+```
+
+### Démarrer — prod
+
+```bash
+pnpm run docker:takka
+pnpm run prisma-db-push
+pnpm --filter postiz-backend --filter postiz-orchestrator --filter takka-postiz run build
+# Or build separately
+pnpm --filter postiz-backend run build
+pnpm --filter postiz-orchestrator run build
+pnpm --filter takka-postiz run build
+
+# Start apps directly
+pnpm run start:prod:backend
+pnpm run start:prod:orchestrator
+pnpm run start:prod:takka
+
+# Start apps with PM2
+pnpm --filter postiz-backend run pm2
+pnpm --filter postiz-orchestrator run pm2
+pnpm --filter takka-postiz run pm2
+
+# Save and setup PM2 to start at boot
+pm2 save
+pm2 startup
+```
+
+Chaque script `pm2` du package fait : `pm2 start npm --name <app> -- start`  
+→ PM2 lance le script `start` via **npm** (binaire Node ; `dotenv` + `node`/`next` comme avant). Restart auto si crash ; `pm2 save` + `pm2 startup` pour le boot. Sur ce serveur, `pm2 start pnpm` casse car pendant `pnpm run` le PATH voit un shim shell de pnpm.
+
+Commandes utiles : `pm2 status` · `pm2 logs` · `pm2 restart all` · `pm2 restart <app>` · `pm2 delete all`
 
 ---
+
+### Nginx reverse proxy
+
+**For frontend domain :**
+```nginx	
+location ^~ /uploads/ {
+	alias /var/www/vhosts/postiz/uploads/;
+	types {
+		image/jpeg jpg jpeg;
+		image/png png;
+		image/gif gif;
+		image/webp webp;
+		video/mp4 mp4;
+	}
+	default_type application/octet-stream;
+}
+
+location ~ ^/ {
+	proxy_pass http://127.0.0.1:4200;
+	proxy_http_version 1.1;
+	proxy_set_header Host $host;
+	proxy_set_header X-Real-IP $remote_addr;
+	proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+	proxy_set_header X-Forwarded-Proto $scheme;
+	proxy_set_header Upgrade $http_upgrade;
+	proxy_set_header Connection "upgrade";
+	proxy_set_header Accept-Language $http_accept_language;
+	proxy_set_header i18next $http_i18next;
+	proxy_read_timeout 90s;
+}
+```
+
+**For backend domain :**
+```nginx	
+location ~ ^/ {
+	proxy_pass http://127.0.0.1:3000;
+	proxy_http_version 1.1;
+	proxy_set_header Host $host;
+	proxy_set_header X-Real-IP $remote_addr;
+	proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+	proxy_set_header X-Forwarded-Proto $scheme;
+	proxy_set_header Upgrade $http_upgrade;
+	proxy_set_header Connection "upgrade";
+	proxy_set_header Auth $http_auth;
+	proxy_set_header Showorg $http_showorg;
+	proxy_set_header Impersonate $http_impersonate;
+	proxy_set_header Reload $http_reload;
+	proxy_set_header Onboarding $http_onboarding;
+	proxy_set_header Activate $http_activate;
+	proxy_set_header Accept-Language $http_accept_language;
+	proxy_read_timeout 90s;
+}
+```
 
 ## Proposition concrète (en 3 phases)
 
