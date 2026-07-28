@@ -25,7 +25,7 @@ pnpm run docker:takka       # prod   → docker-compose.takka.yaml
 
 # Apps
 pnpm run dev:takka-stack                                      # local
-# prod : build + start:prod:backend | orchestrator | takka
+# prod : build + start:prod:takka-backend | orchestrator | takka
 ```
 
 Détail prod / `.env` : [`USE_POSTIZ.md`](../../USE_POSTIZ.md).

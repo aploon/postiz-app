@@ -27,7 +27,7 @@
     "dev:takka-backend": "rm -rf apps/takka-backend/dist && pnpm --filter ./apps/takka-backend run dev",
     "dev:frontend": "rm -rf apps/frontend/dist && pnpm --filter ./apps/frontend run dev",
     "dev:takka": "pnpm --filter takka-postiz run dev",
-    "dev:takka-stack": "pnpm run --filter postiz-backend --filter postiz-orchestrator --filter takka-postiz --parallel dev",
+    "dev:takka-stack": "pnpm run --filter takka-backend --filter postiz-orchestrator --filter takka-postiz --parallel dev",
     "dev:orchestrator": "rm -rf apps/orchestrator/dist && pnpm --filter ./apps/orchestrator run dev",
     "start:prod:orchestrator": "pnpm --filter ./apps/orchestrator run start",
     "start:prod:backend": "pnpm --filter ./apps/backend run start",
