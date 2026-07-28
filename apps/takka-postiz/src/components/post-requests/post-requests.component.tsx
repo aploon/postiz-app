@@ -18,6 +18,7 @@ import dayjs from 'dayjs';
 type PostRequestDocument = {
   id: string;
   name?: string;
+  originalName?: string;
   path: string;
 };
 
@@ -72,7 +73,9 @@ const PostRequestForm = ({
   const [existingDocuments, setExistingDocuments] = useState<
     PostRequestDocument[]
   >(data?.documents || []);
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<
+    { id: string; name: string; file: File }[]
+  >([]);
   const [saving, setSaving] = useState(false);
 
   const form = useForm<PostRequestFormValues>({
@@ -89,22 +92,33 @@ const PostRequestForm = ({
     },
   });
 
-  const selectFiles = useCallback((files: FileList | null) => {
-    if (!files?.length) {
-      return;
-    }
-    setPendingFiles((prev) => [...prev, ...Array.from(files)]);
-    if (fileRef.current) {
-      fileRef.current.value = '';
-    }
-  }, []);
+  const selectFiles = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files || []);
+      if (!files.length) {
+        return;
+      }
+
+      setPendingFiles((prev) => [
+        ...prev,
+        ...files.map((file) => ({
+          id: `${file.name}-${file.lastModified}-${file.size}-${prev.length}-${Math.random()}`,
+          name: file.name,
+          file,
+        })),
+      ]);
+
+      event.target.value = '';
+    },
+    []
+  );
 
   const removeExistingDocument = useCallback((id: string) => {
     setExistingDocuments((prev) => prev.filter((d) => d.id !== id));
   }, []);
 
-  const removePendingFile = useCallback((index: number) => {
-    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  const removePendingFile = useCallback((id: string) => {
+    setPendingFiles((prev) => prev.filter((f) => f.id !== id));
   }, []);
 
   const uploadFile = useCallback(
@@ -130,8 +144,8 @@ const PostRequestForm = ({
       setSaving(true);
       try {
         const uploadedIds: string[] = [];
-        for (const file of pendingFiles) {
-          uploadedIds.push(await uploadFile(file));
+        for (const pending of pendingFiles) {
+          uploadedIds.push(await uploadFile(pending.file));
         }
 
         const documentIds = [
@@ -187,7 +201,7 @@ const PostRequestForm = ({
     <FormProvider {...form}>
       <form
         onSubmit={form.handleSubmit(submit)}
-        className="flex flex-col gap-[12px] p-[16px] pt-0"
+        className="flex flex-col gap-[12px] p-[16px] pt-0 max-w-[600px]"
       >
         <Input name="title" label={t('title', 'Title')} />
         <Textarea
@@ -211,7 +225,7 @@ const PostRequestForm = ({
             type="file"
             multiple
             className="text-[13px]"
-            onChange={(e) => selectFiles(e.target.files)}
+            onChange={selectFiles}
           />
           {existingDocuments.map((doc) => (
             <div
@@ -224,7 +238,7 @@ const PostRequestForm = ({
                 rel="noreferrer"
                 className="underline truncate"
               >
-                {doc.name || doc.path}
+                {doc.originalName || doc.name || doc.path}
               </a>
               <Button
                 type="button"
@@ -235,16 +249,16 @@ const PostRequestForm = ({
               </Button>
             </div>
           ))}
-          {pendingFiles.map((file, index) => (
+          {pendingFiles.map((pending) => (
             <div
-              key={`${file.name}-${file.size}-${index}`}
+              key={pending.id}
               className="flex items-center justify-between gap-[8px] text-[13px]"
             >
-              <span className="truncate">{file.name}</span>
+              <div className="truncate">{pending.name}</div>
               <Button
                 type="button"
                 secondary
-                onClick={() => removePendingFile(index)}
+                onClick={() => removePendingFile(pending.id)}
               >
                 {t('remove', 'Remove')}
               </Button>
