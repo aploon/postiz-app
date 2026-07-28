@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Fragment, useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import useSWR from 'swr';
 import { Button } from '@gitroom/react/form/button';
@@ -14,6 +14,7 @@ import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog';
 import { useUser } from '@gitroom/takka-postiz/components/layout/user.context';
 import dayjs from 'dayjs';
+import clsx from 'clsx';
 
 type PostRequestDocument = {
   id: string;
@@ -41,6 +42,49 @@ type PostRequestFormValues = {
 };
 
 const EDITABLE = ['DRAFT', 'REQUESTED'];
+
+const STATUS_STYLES: Record<string, string> = {
+  DRAFT: 'bg-newColColor text-newTableText',
+  REQUESTED: 'bg-boxFocused text-textItemFocused',
+  APPROVED: 'bg-[#612bd3]/15 text-[#612bd3]',
+  REJECTED: 'bg-red-500/15 text-red-400',
+  SCHEDULED: 'bg-[#612bd3]/10 text-textColor',
+  PUBLISHED: 'bg-emerald-500/15 text-emerald-400',
+};
+
+const StatusBadge = ({ status }: { status: string }) => (
+  <span
+    className={clsx(
+      'inline-flex items-center h-[28px] px-[12px] rounded-[6px] text-[12px] font-[600] tracking-wide uppercase whitespace-nowrap',
+      STATUS_STYLES[status] || 'bg-newColColor text-newTableText'
+    )}
+  >
+    {status}
+  </span>
+);
+
+const ActionButton = ({
+  children,
+  onClick,
+  danger,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  danger?: boolean;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={clsx(
+      'h-[36px] px-[14px] rounded-[8px] text-[13px] font-[500] border cursor-pointer transition-all whitespace-nowrap',
+      danger
+        ? 'border-newTableBorder text-red-400 hover:bg-red-500/10'
+        : 'border-newTableBorder bg-newBgColorInner text-textColor hover:bg-boxHover'
+    )}
+  >
+    {children}
+  </button>
+);
 
 const usePostRequests = () => {
   const fetch = useFetch();
@@ -279,6 +323,75 @@ const PostRequestForm = ({
   );
 };
 
+const PostRequestView = ({ data }: { data: PostRequestItem }) => {
+  const t = useT();
+  const modal = useModals();
+
+  return (
+    <div className="flex flex-col gap-[16px] p-[16px] pt-0 w-[560px] max-w-full">
+      <div className="flex items-start justify-between gap-[12px]">
+        <div className="flex flex-col gap-[6px] min-w-0">
+          <div className="text-[18px] font-[600] truncate">{data.title}</div>
+          <div className="text-[13px] text-newTableText">
+            {dayjs(data.publishDate).format('MMM D, YYYY · HH:mm')}
+            {data.createdBy
+              ? ` · ${data.createdBy.name || data.createdBy.email}`
+              : ''}
+          </div>
+        </div>
+        <StatusBadge status={data.status} />
+      </div>
+
+      <div className="border border-newTableBorder rounded-[8px] bg-newTableHeader p-[16px]">
+        <div className="text-[12px] uppercase tracking-wide text-newTableText mb-[8px]">
+          {t('description', 'Description')}
+        </div>
+        <div className="text-[14px] whitespace-pre-wrap leading-[1.5]">
+          {data.description}
+        </div>
+      </div>
+
+      <div className="border border-newTableBorder rounded-[8px] overflow-hidden">
+        <div className="px-[16px] py-[10px] bg-newTableHeader border-b border-newTableBorder text-[12px] uppercase tracking-wide text-newTableText">
+          {t('documents', 'Documents')}
+          {!!data.documents?.length && (
+            <span className="ms-[6px] opacity-70">({data.documents.length})</span>
+          )}
+        </div>
+        <div className="p-[12px] flex flex-col gap-[8px]">
+          {!data.documents?.length && (
+            <div className="text-[13px] text-newTableText px-[4px]">
+              {t('no_documents', 'No documents')}
+            </div>
+          )}
+          {data.documents?.map((doc) => (
+            <a
+              key={doc.id}
+              href={doc.path}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-[10px] px-[12px] py-[10px] rounded-[8px] border border-newTableBorder bg-newBgColorInner hover:bg-boxHover transition-all text-[13px]"
+            >
+              <span className="uppercase text-[10px] font-[600] text-newTableText tracking-wide shrink-0">
+                {(doc.originalName || doc.name || doc.path).split('.').pop()}
+              </span>
+              <span className="truncate underline">
+                {doc.originalName || doc.name || doc.path}
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex justify-end">
+        <Button type="button" secondary onClick={() => modal.closeAll()}>
+          {t('close', 'Close')}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 export const PostRequestsComponent = () => {
   const t = useT();
   const modal = useModals();
@@ -298,6 +411,17 @@ export const PostRequestsComponent = () => {
       });
     },
     [modal, mutate, t]
+  );
+
+  const openView = useCallback(
+    (item: PostRequestItem) => () => {
+      modal.openModal({
+        title: t('view_post_request', 'View post request'),
+        withCloseButton: true,
+        children: <PostRequestView data={item} />,
+      });
+    },
+    [modal, t]
   );
 
   const remove = useCallback(
@@ -334,14 +458,23 @@ export const PostRequestsComponent = () => {
     [user?.role]
   );
 
+  const rowGridClass = showCreator
+    ? 'grid-cols-[minmax(0,1.5fr)_110px_130px_minmax(0,1fr)_240px]'
+    : 'grid-cols-[minmax(0,1.5fr)_110px_130px_240px]';
+
   return (
-    <div className="bg-newBgColorInner flex-1 flex-col flex p-[20px] gap-[12px]">
+    <div className="bg-newBgColorInner flex-1 flex-col flex p-[20px] gap-[16px]">
       <div className="flex items-center justify-between gap-[12px]">
         <div>
           <h1 className="text-[24px] font-[600]">
             {t('post_requests', 'Post Requests')}
+            {!!data?.length && (
+              <span className="ms-[8px] text-[14px] font-[500] text-newTableText">
+                ({data.length})
+              </span>
+            )}
           </h1>
-          <p className="text-customColor18 text-[14px]">
+          <p className="text-newTableText text-[14px] mt-[4px]">
             {t(
               'post_requests_description',
               'Create and manage content requests for your organization.'
@@ -353,63 +486,79 @@ export const PostRequestsComponent = () => {
         </Button>
       </div>
 
-      <div className="my-[8px] bg-sixth border-fifth border rounded-[4px] p-[24px]">
+      <div className="border border-newTableBorder rounded-[8px] overflow-hidden">
         {isLoading && (
-          <div className="text-customColor18">{t('loading', 'Loading...')}</div>
+          <div className="px-[16px] py-[20px] text-newTableText text-[14px]">
+            {t('loading', 'Loading...')}
+          </div>
         )}
         {!isLoading && !data?.length && (
-          <div className="text-customColor18">
+          <div className="px-[16px] py-[32px] text-center text-newTableText text-[14px]">
             {t('no_post_requests', 'No post requests yet.')}
           </div>
         )}
         {!!data?.length && (
-          <div
-            className={`grid w-full gap-y-[10px] ${
-              showCreator
-                ? 'grid-cols-[1.4fr,1fr,1fr,1fr,0.7fr,0.7fr]'
-                : 'grid-cols-[1.4fr,1fr,1fr,0.7fr,0.7fr]'
-            }`}
-          >
-            <div>{t('title', 'Title')}</div>
-            <div>{t('status', 'Status')}</div>
-            <div>{t('publish_date', 'Publish date')}</div>
-            {showCreator && <div>{t('created_by', 'Created by')}</div>}
-            <div className="text-center">{t('edit', 'Edit')}</div>
-            <div className="text-center">{t('delete', 'Delete')}</div>
+          <>
+            <div
+              className={clsx(
+                'grid gap-[12px] px-[16px] py-[14px] bg-newTableHeader border-b border-newTableBorder text-[13px] uppercase tracking-wide text-newTableText items-center',
+                rowGridClass
+              )}
+            >
+              <div>{t('title', 'Title')}</div>
+              <div>{t('status', 'Status')}</div>
+              <div>{t('publish_date', 'Publish date')}</div>
+              {showCreator && <div>{t('created_by', 'Created by')}</div>}
+              <div className="text-end">{t('actions', 'Actions')}</div>
+            </div>
             {data.map((item) => {
               const canEdit = EDITABLE.includes(item.status);
               return (
-                <Fragment key={item.id}>
-                  <div className="truncate pe-[12px]">{item.title}</div>
-                  <div>{item.status}</div>
-                  <div>{dayjs(item.publishDate).format('YYYY-MM-DD HH:mm')}</div>
+                <div
+                  key={item.id}
+                  className={clsx(
+                    'grid gap-[12px] px-[16px] py-[16px] items-center border-b border-newTableBorder last:border-b-0 hover:bg-boxHover transition-colors',
+                    rowGridClass
+                  )}
+                >
+                  <div className="min-w-0">
+                    <div className="text-[16px] font-[500] truncate">
+                      {item.title}
+                    </div>
+                  </div>
+                  <div>
+                    <StatusBadge status={item.status} />
+                  </div>
+                  <div className="text-[14px] text-newTableText">
+                    {dayjs(item.publishDate).format('MMM D, YYYY')}
+                    <div className="text-[12px]">
+                      {dayjs(item.publishDate).format('HH:mm')}
+                    </div>
+                  </div>
                   {showCreator && (
-                    <div className="truncate pe-[12px]">
+                    <div className="text-[14px] truncate text-newTableText min-w-0">
                       {item.createdBy?.name || item.createdBy?.email || '-'}
                     </div>
                   )}
-                  <div className="flex justify-center">
-                    {canEdit ? (
-                      <Button onClick={openForm(item)}>
+                  <div className="flex items-center justify-end gap-[8px]">
+                    <ActionButton onClick={openView(item)}>
+                      {t('view', 'View')}
+                    </ActionButton>
+                    {canEdit && (
+                      <ActionButton onClick={openForm(item)}>
                         {t('edit', 'Edit')}
-                      </Button>
-                    ) : (
-                      <span className="text-customColor18 text-[12px]">-</span>
+                      </ActionButton>
                     )}
-                  </div>
-                  <div className="flex justify-center">
-                    {canEdit ? (
-                      <Button onClick={remove(item)}>
+                    {canEdit && (
+                      <ActionButton danger onClick={remove(item)}>
                         {t('delete', 'Delete')}
-                      </Button>
-                    ) : (
-                      <span className="text-customColor18 text-[12px]">-</span>
+                      </ActionButton>
                     )}
                   </div>
-                </Fragment>
+                </div>
               );
             })}
-          </div>
+          </>
         )}
       </div>
     </div>
