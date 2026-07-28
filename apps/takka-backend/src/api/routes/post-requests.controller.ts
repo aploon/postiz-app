@@ -29,9 +29,26 @@ export class PostRequestsController {
   async list(
     @GetOrgFromRequest() org: Organization,
     @GetUserFromRequest() user: User,
-    @Query('page') page = '1'
+    @Query('page') page = '1',
+    @Query('search') search?: string,
+    @Query('organizationId') organizationId?: string,
+    @Query('status') status?: string
   ) {
+    if (user.isTakkaAdmin) {
+      return this._postRequestService.listAdmin(user, {
+        page: Number(page) || 1,
+        search,
+        organizationId,
+        status,
+      });
+    }
+
     return this._postRequestService.list(org, user, Number(page) || 1);
+  }
+
+  @Get('/organizations')
+  async listOrganizations(@GetUserFromRequest() user: User) {
+    return this._postRequestService.listOrganizations(user);
   }
 
   @Get('/:id')

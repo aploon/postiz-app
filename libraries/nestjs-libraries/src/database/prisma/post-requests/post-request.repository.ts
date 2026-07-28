@@ -17,6 +17,23 @@ const postRequestInclude = {
   },
 } as const;
 
+const postRequestAdminInclude = {
+  ...postRequestInclude,
+  organization: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+} as const;
+
+export type ListAdminFilters = {
+  page: number;
+  search?: string;
+  organizationId?: string;
+  status?: PostRequestStatus;
+};
+
 @Injectable()
 export class PostRequestRepository {
   constructor(
@@ -50,6 +67,76 @@ export class PostRequestRepository {
     };
   }
 
+  async listAdmin(filters: ListAdminFilters) {
+    const pageSize = 10;
+    const pageNum = Math.max(0, (filters.page || 1) - 1);
+    const trimmedSearch = filters.search?.trim();
+
+    const where = {
+      ...(filters.organizationId
+        ? { organizationId: filters.organizationId }
+        : {}),
+      ...(filters.status ? { status: filters.status } : {}),
+      ...(trimmedSearch
+        ? {
+            OR: [
+              {
+                title: {
+                  contains: trimmedSearch,
+                  mode: 'insensitive' as const,
+                },
+              },
+              {
+                description: {
+                  contains: trimmedSearch,
+                  mode: 'insensitive' as const,
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    const [total, results] = await Promise.all([
+      this._postRequest.model.postRequest.count({ where }),
+      this._postRequest.model.postRequest.findMany({
+        where,
+        include: postRequestAdminInclude,
+        orderBy: { createdAt: 'desc' },
+        skip: pageNum * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    return {
+      results,
+      pages: Math.max(1, Math.ceil(total / pageSize)),
+      total,
+    };
+  }
+
+  async listOrganizationsWithRequests() {
+    const rows = await this._postRequest.model.postRequest.findMany({
+      distinct: ['organizationId'],
+      select: {
+        organizationId: true,
+        organization: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        organizationId: 'asc',
+      },
+    });
+
+    return rows
+      .map((row) => row.organization)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
   getById(orgId: string, id: string, createdByUserId?: string) {
     return this._postRequest.model.postRequest.findFirst({
       where: {
@@ -64,7 +151,7 @@ export class PostRequestRepository {
   getByIdAdmin(id: string) {
     return this._postRequest.model.postRequest.findUnique({
       where: { id },
-      include: postRequestInclude,
+      include: postRequestAdminInclude,
     });
   }
 
@@ -122,7 +209,7 @@ export class PostRequestRepository {
     return this._postRequest.model.postRequest.update({
       where: { id },
       data: { status },
-      include: postRequestInclude,
+      include: postRequestAdminInclude,
     });
   }
 

@@ -25,7 +25,46 @@ export class PostRequestService {
     return this._postRequestRepository.list(org.id, page, createdByUserId);
   }
 
+  listAdmin(
+    user: User,
+    filters: {
+      page?: number;
+      search?: string;
+      organizationId?: string;
+      status?: string;
+    }
+  ) {
+    if (!user?.isTakkaAdmin) {
+      throw new ForbiddenException('Unauthorized');
+    }
+
+    const status = this.parseStatus(filters.status);
+
+    return this._postRequestRepository.listAdmin({
+      page: filters.page || 1,
+      search: filters.search,
+      organizationId: filters.organizationId,
+      status,
+    });
+  }
+
+  listOrganizations(user: User) {
+    if (!user?.isTakkaAdmin) {
+      throw new ForbiddenException('Unauthorized');
+    }
+
+    return this._postRequestRepository.listOrganizationsWithRequests();
+  }
+
   async get(org: Organization, user: User, id: string) {
+    if (user?.isTakkaAdmin) {
+      const postRequest = await this._postRequestRepository.getByIdAdmin(id);
+      if (!postRequest) {
+        throw new NotFoundException('Post request not found');
+      }
+      return postRequest;
+    }
+
     const createdByUserId = this.isRestrictedUser(org) ? user.id : undefined;
     const postRequest = await this._postRequestRepository.getById(
       org.id,
@@ -104,6 +143,20 @@ export class PostRequestService {
   private isRestrictedUser(org: Organization) {
     // @ts-ignore
     return org?.users?.[0]?.role === 'USER';
+  }
+
+  private parseStatus(status?: string): PostRequestStatus | undefined {
+    if (!status) {
+      return undefined;
+    }
+
+    if (
+      !Object.values(PostRequestStatus).includes(status as PostRequestStatus)
+    ) {
+      throw new BadRequestException('Invalid status');
+    }
+
+    return status as PostRequestStatus;
   }
 
   private assertEditable(status: PostRequestStatus) {
