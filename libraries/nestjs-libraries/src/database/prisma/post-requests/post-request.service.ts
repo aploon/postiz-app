@@ -61,6 +61,20 @@ export class PostRequestService {
     return this._postRequestRepository.delete(org.id, id);
   }
 
+  async markAsRequested(org: Organization, user: User, id: string) {
+    const postRequest = await this.getOwnedEditable(org, user, id);
+    if (postRequest.status !== PostRequestStatus.DRAFT) {
+      throw new BadRequestException(
+        'Only draft post requests can be submitted'
+      );
+    }
+
+    return this._postRequestRepository.updateStatus(
+      id,
+      PostRequestStatus.REQUESTED
+    );
+  }
+
   async updateStatus(user: User, id: string, status: PostRequestStatus) {
     if (!user?.isTakkaAdmin) {
       throw new ForbiddenException('Unauthorized');

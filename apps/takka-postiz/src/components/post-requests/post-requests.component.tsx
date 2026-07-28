@@ -460,14 +460,46 @@ export const PostRequestsComponent = () => {
     [fetch, mutate, t, toaster]
   );
 
+  const requestItem = useCallback(
+    (item: PostRequestItem) => async () => {
+      if (
+        !(await deleteDialog(
+          t(
+            'are_you_sure_you_want_to_submit_this_post_request',
+            'Submit this post request? Status will change to REQUESTED.'
+          )
+        ))
+      ) {
+        return;
+      }
+
+      const response = await fetch(`/post-requests/${item.id}/request`, {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        toaster.show(
+          t('post_request_submit_failed', 'Failed to submit post request'),
+          'warning'
+        );
+        return;
+      }
+      toaster.show(
+        t('post_request_submitted', 'Post request submitted'),
+        'success'
+      );
+      mutate();
+    },
+    [fetch, mutate, t, toaster]
+  );
+
   const showCreator = useMemo(
     () => user?.role === 'ADMIN' || user?.role === 'SUPERADMIN',
     [user?.role]
   );
 
   const rowGridClass = showCreator
-    ? 'grid-cols-[minmax(0,1.5fr)_110px_130px_minmax(0,1fr)_240px]'
-    : 'grid-cols-[minmax(0,1.5fr)_110px_130px_240px]';
+    ? 'grid-cols-[minmax(0,1.5fr)_110px_130px_minmax(0,1fr)_300px]'
+    : 'grid-cols-[minmax(0,1.5fr)_110px_130px_300px]';
 
   return (
     <div className="bg-newBgColorInner flex-1 flex-col flex p-[20px] gap-[16px]">
@@ -551,6 +583,17 @@ export const PostRequestsComponent = () => {
                         {t('edit', 'Edit')}
                       </ActionButton>
                     )}
+                    {item.status === 'DRAFT' && (
+                      <ActionButton onClick={requestItem(item)}>
+                        <span className="flex items-center gap-[6px]">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send" viewBox="0 0 16 16">
+                            <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
+                          </svg>
+                          {t('request', 'Request')}
+                        </span>
+                      </ActionButton>
+                    )}
+               
                     {canEdit && (
                       <ActionButton danger onClick={remove(item)}>
                         {t('delete', 'Delete')}

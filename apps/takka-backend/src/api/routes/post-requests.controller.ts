@@ -71,6 +71,15 @@ export class PostRequestsController {
     return this._postRequestService.delete(org, user, id);
   }
 
+  @Post('/:id/request')
+  async markAsRequested(
+    @GetOrgFromRequest() org: Organization,
+    @GetUserFromRequest() user: User,
+    @Param('id') id: string
+  ) {
+    return this._postRequestService.markAsRequested(org, user, id);
+  }
+
   @Patch('/:id/status')
   async updateStatus(
     @GetUserFromRequest() user: User,
