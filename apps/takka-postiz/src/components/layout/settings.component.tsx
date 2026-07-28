@@ -81,14 +81,27 @@ export const SettingsPopup: FC<{
   const t = useT();
   const list = useMemo(() => {
     const arr = [];
+    const role = user?.role;
+
     arr.push({
       tab: 'global_settings',
       label: t('global_settings', 'Global Settings'),
     });
-    if (user?.tier?.team_members && isGeneral) {
+
+    if (
+      role !== 'USER' &&
+      user?.tier?.team_members &&
+      isGeneral
+    ) {
       arr.push({ tab: 'teams', label: t('teams', 'Teams') });
     }
-    if (user?.tier?.public_api && isGeneral && showLogout) {
+
+    if (
+      role === 'SUPERADMIN' &&
+      user?.tier?.public_api &&
+      isGeneral &&
+      showLogout
+    ) {
       arr.push({ tab: 'api', label: t('developers', 'Developers') });
     }
 
