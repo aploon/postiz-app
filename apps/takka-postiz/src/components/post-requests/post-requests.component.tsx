@@ -613,7 +613,9 @@ export const PostRequestsComponent = () => {
 
   const rowGridClass = useMemo(() => {
     if (isTakkaAdmin) {
-      return 'grid-cols-[minmax(0,1.4fr)_120px_110px_130px_minmax(0,1fr)_minmax(280px,auto)]';
+      // `auto` peut faire varier la taille de la colonne "Actions" selon le contenu
+      // (header vs lignes), ce qui désaligne visuellement les colonnes.
+      return 'grid-cols-[minmax(0,1.4fr)_120px_110px_130px_minmax(0,1fr)_300px]';
     }
     if (showCreator) {
       return 'grid-cols-[minmax(0,1.5fr)_110px_130px_minmax(0,1fr)_300px]';
@@ -718,10 +720,16 @@ export const PostRequestsComponent = () => {
               )}
             >
               <div>{t('title', 'Title')}</div>
-              {isTakkaAdmin && <div>{t('organization', 'Organization')}</div>}
+              {isTakkaAdmin && (
+                <div className="min-w-0">
+                  {t('organization', 'Organization')}
+                </div>
+              )}
               <div>{t('status', 'Status')}</div>
               <div>{t('publish_date', 'Publish date')}</div>
-              {showCreator && <div>{t('created_by', 'Created by')}</div>}
+              {showCreator && (
+                <div className="min-w-0">{t('created_by', 'Created by')}</div>
+              )}
               <div className="text-end">{t('actions', 'Actions')}</div>
             </div>
             {results.map((item) => {
