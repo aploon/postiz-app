@@ -39,6 +39,7 @@
     "docker:takka": "docker compose -f ./docker-compose.takka.yaml up -d",
     "docker:takka:down": "docker compose -f ./docker-compose.takka.yaml down",
     "commands:build:development": "pnpm --filter ./apps/commands run build",
+    "create:superadmin": "pnpm --dir apps/commands run create:superadmin",
     "prisma-generate": "pnpm dlx prisma@6.5.0 generate --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma",
     "prisma-db-push": "pnpm dlx prisma@6.5.0 db push --accept-data-loss --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma",
     "prisma-db-pull": "pnpm dlx prisma@6.5.0 db pull --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma",

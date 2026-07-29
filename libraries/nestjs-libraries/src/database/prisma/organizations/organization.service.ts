@@ -168,4 +168,8 @@ export class OrganizationService {
       userAgent
     );
   }
+
+  createSuperAdminUser(body: { email: string; password: string }) {
+    return this._organizationRepository.createSuperAdminUser(body);
+  }
 }

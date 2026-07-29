@@ -130,6 +130,20 @@ pnpm run prisma-db-push
 pnpm run dev:takka-stack
 ```
 
+### Créer un SUPERADMIN plateforme (`isSuperAdmin`)
+
+Compte plateforme (impersonation / routes admin). Distinct de `isTakkaAdmin` et du rôle org `SUPERADMIN`.  
+Crée uniquement un utilisateur (pas d’organisation).
+
+```bash
+pnpm run create:superadmin -- --email=admin@example.com --password=secret123
+```
+
+- Si l’email n’existe pas : crée l’utilisateur (`isSuperAdmin: true`, activé).
+- Si l’email existe déjà (LOCAL) : le promeut en superadmin et met à jour le mot de passe.
+
+Temporal doit être joignable (`TEMPORAL_ADDRESS`, stack Docker Takka), comme pour le backend.
+
 ### Démarrer — prod
 
 ```bash

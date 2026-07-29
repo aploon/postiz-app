@@ -1,6 +1,7 @@
 import { PrismaRepository } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 import {
   PostRequestStatus,
+  Provider,
   Role,
   ShortLinkPreference,
   SubscriptionTier,
@@ -583,5 +584,57 @@ export class OrganizationRepository {
     });
 
     return { organization, user };
+  }
+
+  async createSuperAdminUser(body: {
+    email: string;
+    password: string;
+  }) {
+    const existing = await this._user.model.user.findFirst({
+      where: {
+        email: body.email,
+        providerName: Provider.LOCAL,
+      },
+    });
+
+    if (existing) {
+      const user = await this._user.model.user.update({
+        where: { id: existing.id },
+        data: {
+          isSuperAdmin: true,
+          activated: true,
+          password: AuthService.hashPassword(body.password),
+        },
+        select: {
+          id: true,
+          email: true,
+          isSuperAdmin: true,
+          activated: true,
+        },
+      });
+      return { created: false as const, user };
+    }
+
+    const user = await this._user.model.user.create({
+      data: {
+        activated: true,
+        email: body.email,
+        password: AuthService.hashPassword(body.password),
+        providerName: Provider.LOCAL,
+        providerId: '',
+        timezone: 0,
+        ip: '127.0.0.1',
+        agent: 'cli',
+        isSuperAdmin: true,
+      },
+      select: {
+        id: true,
+        email: true,
+        isSuperAdmin: true,
+        activated: true,
+      },
+    });
+
+    return { created: true as const, user };
   }
 }

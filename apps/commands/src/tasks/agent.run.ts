@@ -10,6 +10,7 @@ export class AgentRun {
     describe: 'Run the agent',
   })
   async agentRun() {
-    console.log(await this._agentGraphService.createGraph('hello', true));
+    // createGraph was removed from AgentGraphService; keep the command stub.
+    console.log('run:agent is not available with the current AgentGraphService');
   }
 }
