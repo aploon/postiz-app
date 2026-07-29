@@ -241,3 +241,11 @@ location ~ ^/ {
 
 **Besoin d’aller plus loin ?**
 On peut détailler : endpoints d’une future API slim, modèle de données minimal, ou liste des fichiers/modules à retirer en priorité.
+
+## Créer un super admin
+
+```bash
+pnpm dlx prisma@6.5.0 db execute --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma --stdin <<'EOF'
+UPDATE "User" SET "isSuperAdmin" = true WHERE email = 'ton@email.com';
+EOF
+```
