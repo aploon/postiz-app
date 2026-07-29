@@ -12,6 +12,7 @@ import {
 } from '@gitroom/nestjs-libraries/dtos/post-requests/post-request.dto';
 import { NotificationService } from '@gitroom/nestjs-libraries/database/prisma/notifications/notification.service';
 import { UsersService } from '@gitroom/nestjs-libraries/database/prisma/users/users.service';
+import { OrganizationRepository } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.repository';
 
 const EDITABLE_STATUSES: PostRequestStatus[] = [
   PostRequestStatus.DRAFT,
@@ -38,7 +39,8 @@ export class PostRequestService {
   constructor(
     private _postRequestRepository: PostRequestRepository,
     private _notificationService: NotificationService,
-    private _usersService: UsersService
+    private _usersService: UsersService,
+    private _organizationRepository: OrganizationRepository
   ) {}
 
   list(org: Organization, user: User, page = 1) {
@@ -204,28 +206,37 @@ export class PostRequestService {
   }
 
   private async notifyStatusChange(postRequest: NotifyPostRequest) {
-    if (!this._notificationService.hasEmailProvider()) {
-      return;
-    }
-
     const reviewUrl = `${process.env.FRONTEND_URL}/post-requests`;
     const title = postRequest.title;
     const orgName = postRequest.organization?.name || 'an organization';
+    const sendEmail = this._notificationService.hasEmailProvider();
 
     if (postRequest.status === PostRequestStatus.REQUESTED) {
-      const admins = await this._usersService.findTakkaAdmins();
       const subject = 'Post request submitted';
-      const html = `New post request submitted: "${title}" from ${orgName}. <a href="${reviewUrl}">Review</a>`;
+      const message = `New post request submitted: "${title}" from ${orgName}. <a href="${reviewUrl}">Review</a>`;
 
-      for (const admin of admins) {
-        if (!admin.email) {
-          continue;
+      // In-app for Takka admins (they belong to the Takkatech org).
+      const takkaOrg =
+        await this._organizationRepository.ensureTakkatechOrganization();
+      await this._notificationService.inAppNotification(
+        takkaOrg.id,
+        subject,
+        message,
+        false
+      );
+
+      if (sendEmail) {
+        const admins = await this._usersService.findTakkaAdmins();
+        for (const admin of admins) {
+          if (!admin.email) {
+            continue;
+          }
+          await this._notificationService.sendEmail(
+            admin.email,
+            subject,
+            message
+          );
         }
-        await this._notificationService.sendEmail(
-          admin.email,
-          subject,
-          html
-        );
       }
       return;
     }
@@ -236,12 +247,15 @@ export class PostRequestService {
 
     const label = this.statusLabel(postRequest.status);
     const subject = `Post request ${label.toLowerCase()}`;
-    const html = `Your post request "${title}" was ${label}. <a href="${reviewUrl}">View post requests</a>`;
+    const message = `Your post request "${title}" was ${label}. <a href="${reviewUrl}">View post requests</a>`;
 
-    await this._notificationService.sendEmailsToOrg(
+    // In-app for the client org; emails when a provider is configured.
+    await this._notificationService.inAppNotification(
       postRequest.organizationId,
       subject,
-      html,
+      message,
+      sendEmail,
+      false,
       'info'
     );
   }
