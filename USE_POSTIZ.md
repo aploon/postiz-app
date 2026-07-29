@@ -135,6 +135,7 @@ pnpm run dev:takka-stack
 ```bash
 pnpm run docker:takka
 pnpm run prisma-db-push
+# allow more space with export NODE_OPTIONS="--max-old-space-size=8192"
 pnpm --filter takka-backend --filter postiz-orchestrator --filter takka-postiz run build
 # Or build separately
 pnpm --filter takka-backend run build
