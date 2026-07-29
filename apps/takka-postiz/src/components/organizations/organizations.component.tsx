@@ -84,7 +84,7 @@ export const OrganizationsComponent = () => {
             >
               <div>{t('name', 'Name')}</div>
               <div>{t('users', 'Users')}</div>
-              <div>{t('total', 'Total')}</div>
+              <div>{t('requests', 'Requests')}</div>
               <div>{t('approved', 'Approved')}</div>
               <div>{t('rejected', 'Rejected')}</div>
               <div>{t('scheduled', 'Scheduled')}</div>
