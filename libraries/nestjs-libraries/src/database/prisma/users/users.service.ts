@@ -84,4 +84,8 @@ export class UsersService {
   updateEmailNotifications(userId: string, body: EmailNotificationsDto) {
     return this._usersRepository.updateEmailNotifications(userId, body);
   }
+
+  findTakkaAdmins() {
+    return this._usersRepository.findTakkaAdmins();
+  }
 }

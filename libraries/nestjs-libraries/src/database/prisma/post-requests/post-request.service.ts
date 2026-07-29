@@ -10,15 +10,36 @@ import {
   CreatePostRequestDto,
   UpdatePostRequestDto,
 } from '@gitroom/nestjs-libraries/dtos/post-requests/post-request.dto';
+import { NotificationService } from '@gitroom/nestjs-libraries/database/prisma/notifications/notification.service';
+import { UsersService } from '@gitroom/nestjs-libraries/database/prisma/users/users.service';
 
 const EDITABLE_STATUSES: PostRequestStatus[] = [
   PostRequestStatus.DRAFT,
   PostRequestStatus.REQUESTED,
 ];
 
+const CLIENT_NOTIFY_STATUSES: PostRequestStatus[] = [
+  PostRequestStatus.APPROVED,
+  PostRequestStatus.REJECTED,
+  PostRequestStatus.SCHEDULED,
+  PostRequestStatus.PUBLISHED,
+];
+
+type NotifyPostRequest = {
+  id: string;
+  title: string;
+  status: PostRequestStatus;
+  organizationId: string;
+  organization?: { id: string; name: string } | null;
+};
+
 @Injectable()
 export class PostRequestService {
-  constructor(private _postRequestRepository: PostRequestRepository) {}
+  constructor(
+    private _postRequestRepository: PostRequestRepository,
+    private _notificationService: NotificationService,
+    private _usersService: UsersService
+  ) {}
 
   list(org: Organization, user: User, page = 1) {
     if (this.isRestrictedUser(org)) {
@@ -96,8 +117,20 @@ export class PostRequestService {
     return postRequest;
   }
 
-  create(orgId: string, userId: string, body: CreatePostRequestDto) {
-    return this._postRequestRepository.create(orgId, userId, body);
+  async create(orgId: string, userId: string, body: CreatePostRequestDto) {
+    const created = await this._postRequestRepository.create(
+      orgId,
+      userId,
+      body
+    );
+
+    if (created?.status === PostRequestStatus.REQUESTED) {
+      const forNotify =
+        (await this._postRequestRepository.getByIdAdmin(created.id)) || created;
+      await this.notifyStatusChange(forNotify);
+    }
+
+    return created;
   }
 
   async update(
@@ -108,8 +141,20 @@ export class PostRequestService {
   ) {
     const postRequest = await this.getOwnedEditable(org, user, id);
     this.assertEditable(postRequest.status);
+    const previousStatus = postRequest.status;
 
-    return this._postRequestRepository.update(org.id, id, body);
+    const updated = await this._postRequestRepository.update(org.id, id, body);
+
+    if (
+      previousStatus !== PostRequestStatus.REQUESTED &&
+      updated?.status === PostRequestStatus.REQUESTED
+    ) {
+      const forNotify =
+        (await this._postRequestRepository.getByIdAdmin(updated.id)) || updated;
+      await this.notifyStatusChange(forNotify);
+    }
+
+    return updated;
   }
 
   async delete(org: Organization, user: User, id: string) {
@@ -127,10 +172,12 @@ export class PostRequestService {
       );
     }
 
-    return this._postRequestRepository.updateStatus(
+    const updated = await this._postRequestRepository.updateStatus(
       id,
       PostRequestStatus.REQUESTED
     );
+    await this.notifyStatusChange(updated);
+    return updated;
   }
 
   async updateStatus(user: User, id: string, status: PostRequestStatus) {
@@ -147,7 +194,71 @@ export class PostRequestService {
       throw new NotFoundException('Post request not found');
     }
 
-    return this._postRequestRepository.updateStatus(id, status);
+    if (postRequest.status === status) {
+      return postRequest;
+    }
+
+    const updated = await this._postRequestRepository.updateStatus(id, status);
+    await this.notifyStatusChange(updated);
+    return updated;
+  }
+
+  private async notifyStatusChange(postRequest: NotifyPostRequest) {
+    if (!this._notificationService.hasEmailProvider()) {
+      return;
+    }
+
+    const reviewUrl = `${process.env.FRONTEND_URL}/post-requests`;
+    const title = postRequest.title;
+    const orgName = postRequest.organization?.name || 'an organization';
+
+    if (postRequest.status === PostRequestStatus.REQUESTED) {
+      const admins = await this._usersService.findTakkaAdmins();
+      const subject = 'Post request submitted';
+      const html = `New post request submitted: "${title}" from ${orgName}. <a href="${reviewUrl}">Review</a>`;
+
+      for (const admin of admins) {
+        if (!admin.email) {
+          continue;
+        }
+        await this._notificationService.sendEmail(
+          admin.email,
+          subject,
+          html
+        );
+      }
+      return;
+    }
+
+    if (!CLIENT_NOTIFY_STATUSES.includes(postRequest.status)) {
+      return;
+    }
+
+    const label = this.statusLabel(postRequest.status);
+    const subject = `Post request ${label.toLowerCase()}`;
+    const html = `Your post request "${title}" was ${label}. <a href="${reviewUrl}">View post requests</a>`;
+
+    await this._notificationService.sendEmailsToOrg(
+      postRequest.organizationId,
+      subject,
+      html,
+      'info'
+    );
+  }
+
+  private statusLabel(status: PostRequestStatus) {
+    switch (status) {
+      case PostRequestStatus.APPROVED:
+        return 'Approved';
+      case PostRequestStatus.REJECTED:
+        return 'Rejected';
+      case PostRequestStatus.SCHEDULED:
+        return 'Scheduled';
+      case PostRequestStatus.PUBLISHED:
+        return 'Published';
+      default:
+        return status;
+    }
   }
 
   private async getOwnedEditable(org: Organization, user: User, id: string) {

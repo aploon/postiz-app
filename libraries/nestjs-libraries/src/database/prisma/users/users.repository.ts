@@ -194,4 +194,17 @@ export class UsersRepository {
       },
     });
   }
+
+  findTakkaAdmins() {
+    return this._user.model.user.findMany({
+      where: {
+        isTakkaAdmin: true,
+        activated: true,
+      },
+      select: {
+        id: true,
+        email: true,
+      },
+    });
+  }
 }
