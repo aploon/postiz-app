@@ -558,7 +558,8 @@ export const PostRequestsComponent = () => {
           t(
             'are_you_sure_you_want_to_submit_this_post_request',
             'Submit this post request? Status will change to REQUESTED.'
-          )
+          ),
+          t('yes_submit_it', 'Yes, submit it!')
         ))
       ) {
         return;
@@ -591,7 +592,8 @@ export const PostRequestsComponent = () => {
             'are_you_sure_you_want_to_change_status',
             `Change status to ${status}?`,
             { status }
-          )
+          ),
+          t('yes_confirm', 'Yes, confirm!')
         ))
       ) {
         return;
