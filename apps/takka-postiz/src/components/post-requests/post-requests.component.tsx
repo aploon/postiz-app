@@ -480,7 +480,8 @@ export const PostRequestsComponent = () => {
     status: statusFilter,
     isTakkaAdmin,
   });
-  const { data: organizations } = usePostRequestOrganizations(isTakkaAdmin);
+  const { data: organizationsData } = usePostRequestOrganizations(isTakkaAdmin);
+  const organizations = Array.isArray(organizationsData) ? organizationsData : [];
   const results = data?.results || [];
 
   const openForm = useCallback(
@@ -670,7 +671,7 @@ export const PostRequestsComponent = () => {
               className="bg-newBgColorInner h-[38px] border border-newTableBorder rounded-[8px] px-[10px] text-[14px] text-textColor outline-none"
             >
               <option value="">{t('all_organizations', 'All organizations')}</option>
-              {(organizations || []).map((org) => (
+              {organizations.map((org) => (
                 <option key={org.id} value={org.id}>
                   {org.name}
                 </option>
