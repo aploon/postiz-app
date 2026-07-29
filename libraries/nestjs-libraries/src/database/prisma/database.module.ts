@@ -31,6 +31,10 @@ import { AutopostRepository } from '@gitroom/nestjs-libraries/database/prisma/au
 import { AutopostService } from '@gitroom/nestjs-libraries/database/prisma/autopost/autopost.service';
 import { SetsService } from '@gitroom/nestjs-libraries/database/prisma/sets/sets.service';
 import { SetsRepository } from '@gitroom/nestjs-libraries/database/prisma/sets/sets.repository';
+import { PostRequestService } from '@gitroom/nestjs-libraries/database/prisma/post-requests/post-request.service';
+import { PostRequestRepository } from '@gitroom/nestjs-libraries/database/prisma/post-requests/post-request.repository';
+import { DashboardService } from '@gitroom/nestjs-libraries/database/prisma/dashboard/dashboard.service';
+import { DashboardRepository } from '@gitroom/nestjs-libraries/database/prisma/dashboard/dashboard.repository';
 import { ThirdPartyRepository } from '@gitroom/nestjs-libraries/database/prisma/third-party/third-party.repository';
 import { ThirdPartyService } from '@gitroom/nestjs-libraries/database/prisma/third-party/third-party.service';
 import { VideoManager } from '@gitroom/nestjs-libraries/videos/video.manager';
@@ -86,6 +90,10 @@ import { AdminStatsService } from '@gitroom/nestjs-libraries/database/prisma/adm
     ShortLinkService,
     SetsService,
     SetsRepository,
+    PostRequestService,
+    PostRequestRepository,
+    DashboardService,
+    DashboardRepository,
     ThirdPartyRepository,
     ThirdPartyService,
     OAuthRepository,

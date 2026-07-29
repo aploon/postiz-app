@@ -1,6 +1,7 @@
 import {
   IsDefined,
   IsEmail,
+  IsOptional,
   IsString,
   MaxLength,
   MinLength,
@@ -30,11 +31,13 @@ export class CreateOrgUserDto {
   @ValidateIf((o) => !o.providerToken)
   email: string;
 
+  // Optional for team-invite registration (user joins an existing org).
   @IsString()
-  @IsDefined()
+  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined && value !== null && value !== '')
   @MinLength(3)
   @MaxLength(128)
-  company: string;
+  company?: string;
 
   datafast_visitor_id: string;
 }

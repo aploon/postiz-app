@@ -114,8 +114,11 @@ export class UsersRepository {
       },
       select: {
         id: true,
+        email: true,
         name: true,
+        lastName: true,
         bio: true,
+        providerName: true,
         picture: {
           select: {
             id: true,
@@ -134,17 +137,34 @@ export class UsersRepository {
         id: userId,
       },
       data: {
-        name: body.fullname,
-        bio: body.bio,
-        picture: body.picture
+        name: body.name,
+        lastName: body.lastName || null,
+        ...(typeof body.bio !== 'undefined' ? { bio: body.bio } : {}),
+        ...(typeof body.picture !== 'undefined'
           ? {
-              connect: {
-                id: body.picture.id,
-              },
+              picture: body.picture
+                ? {
+                    connect: {
+                      id: body.picture.id,
+                    },
+                  }
+                : {
+                    disconnect: true,
+                  },
             }
-          : {
-              disconnect: true,
-            },
+          : {}),
+      },
+    });
+  }
+
+  getPasswordHash(userId: string) {
+    return this._user.model.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        password: true,
+        providerName: true,
       },
     });
   }
@@ -171,6 +191,19 @@ export class UsersRepository {
         sendSuccessEmails: body.sendSuccessEmails,
         sendFailureEmails: body.sendFailureEmails,
         sendStreakEmails: body.sendStreakEmails,
+      },
+    });
+  }
+
+  findTakkaAdmins() {
+    return this._user.model.user.findMany({
+      where: {
+        isTakkaAdmin: true,
+        activated: true,
+      },
+      select: {
+        id: true,
+        email: true,
       },
     });
   }

@@ -135,19 +135,19 @@ pnpm run dev:takka-stack
 ```bash
 pnpm run docker:takka
 pnpm run prisma-db-push
-pnpm --filter postiz-backend --filter postiz-orchestrator --filter takka-postiz run build
+pnpm --filter takka-backend --filter postiz-orchestrator --filter takka-postiz run build
 # Or build separately
-pnpm --filter postiz-backend run build
+pnpm --filter takka-backend run build
 pnpm --filter postiz-orchestrator run build
 pnpm --filter takka-postiz run build
 
 # Start apps directly
-pnpm run start:prod:backend
+pnpm run start:prod:takka-backend
 pnpm run start:prod:orchestrator
 pnpm run start:prod:takka
 
 # Start apps with PM2
-pnpm --filter postiz-backend run pm2
+pnpm --filter takka-backend run pm2
 pnpm --filter postiz-orchestrator run pm2
 pnpm --filter takka-postiz run pm2
 
@@ -241,3 +241,11 @@ location ~ ^/ {
 
 **Besoin d’aller plus loin ?**
 On peut détailler : endpoints d’une future API slim, modèle de données minimal, ou liste des fichiers/modules à retirer en priorité.
+
+## Créer un super admin
+
+```bash
+pnpm dlx prisma@6.5.0 db execute --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma --stdin <<'EOF'
+UPDATE "User" SET "isSuperAdmin" = true WHERE email = 'ton@email.com';
+EOF
+```

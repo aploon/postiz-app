@@ -31,6 +31,7 @@ import { Impersonate } from '@gitroom/takka-postiz/components/layout/impersonate
 import { AnnouncementBanner } from '@gitroom/takka-postiz/components/layout/announcement.banner';
 import { Title } from '@gitroom/takka-postiz/components/layout/title';
 import { TopMenu } from '@gitroom/takka-postiz/components/layout/top.menu';
+import { RoleRouteGuard } from '@gitroom/takka-postiz/components/layout/role.route.guard';
 import { LanguageComponent } from '@gitroom/takka-postiz/components/layout/language.component';
 import { ChromeExtensionComponent } from '@gitroom/takka-postiz/components/layout/chrome.extension.component';
 import NotificationComponent from '@gitroom/takka-postiz/components/notifications/notification.component';
@@ -67,6 +68,7 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
   return (
     <ContextWrapper user={user}>
       <MantineWrapper>
+        <RoleRouteGuard />
         <ToolTip />
         <Toaster />
         <TrialTracker />

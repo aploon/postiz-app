@@ -1,16 +1,29 @@
 import { PrismaRepository } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
-import { Role, ShortLinkPreference, SubscriptionTier } from '@prisma/client';
+import {
+  PostRequestStatus,
+  Role,
+  ShortLinkPreference,
+  SubscriptionTier,
+} from '@prisma/client';
 import { Injectable } from '@nestjs/common';
 import { AuthService } from '@gitroom/helpers/auth/auth.service';
 import { CreateOrgUserDto } from '@gitroom/nestjs-libraries/dtos/auth/create.org.user.dto';
 import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
+
+const DISPLAY_POST_REQUEST_STATUSES: PostRequestStatus[] = [
+  PostRequestStatus.APPROVED,
+  PostRequestStatus.REJECTED,
+  PostRequestStatus.SCHEDULED,
+  PostRequestStatus.PUBLISHED,
+];
 
 @Injectable()
 export class OrganizationRepository {
   constructor(
     private _organization: PrismaRepository<'organization'>,
     private _userOrg: PrismaRepository<'userOrganization'>,
-    private _user: PrismaRepository<'user'>
+    private _user: PrismaRepository<'user'>,
+    private _postRequest: PrismaRepository<'postRequest'>
   ) {}
 
   createMaxUser(id: string, name: string, saasName: string, email: string) {
@@ -71,6 +84,69 @@ export class OrganizationRepository {
 
   getCount() {
     return this._organization.model.organization.count();
+  }
+
+  async listForTakkaAdmin(page = 1) {
+    const pageSize = 20;
+    const pageNum = Math.max(0, (page || 1) - 1);
+
+    const [total, organizations, statusGroups] = await Promise.all([
+      this._organization.model.organization.count(),
+      this._organization.model.organization.findMany({
+        select: {
+          id: true,
+          name: true,
+          createdAt: true,
+          _count: {
+            select: {
+              users: {
+                where: { disabled: false },
+              },
+              postRequests: true,
+            },
+          },
+        },
+        orderBy: { name: 'asc' },
+        skip: pageNum * pageSize,
+        take: pageSize,
+      }),
+      this._postRequest.model.postRequest.groupBy({
+        by: ['organizationId', 'status'],
+        where: {
+          status: { in: DISPLAY_POST_REQUEST_STATUSES },
+        },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const statusByOrg = new Map<
+      string,
+      Partial<Record<PostRequestStatus, number>>
+    >();
+    for (const row of statusGroups) {
+      const current = statusByOrg.get(row.organizationId) || {};
+      current[row.status] = row._count._all;
+      statusByOrg.set(row.organizationId, current);
+    }
+
+    return {
+      results: organizations.map((org) => {
+        const counts = statusByOrg.get(org.id) || {};
+        return {
+          id: org.id,
+          name: org.name,
+          createdAt: org.createdAt,
+          usersCount: org._count.users,
+          postRequestsCount: org._count.postRequests,
+          approvedCount: counts[PostRequestStatus.APPROVED] || 0,
+          rejectedCount: counts[PostRequestStatus.REJECTED] || 0,
+          scheduledCount: counts[PostRequestStatus.SCHEDULED] || 0,
+          publishedCount: counts[PostRequestStatus.PUBLISHED] || 0,
+        };
+      }),
+      pages: Math.max(1, Math.ceil(total / pageSize)),
+      total,
+    };
   }
 
   getUserOrg(id: string) {
@@ -160,6 +236,21 @@ export class OrganizationRepository {
       },
       data: {
         apiKey: AuthService.fixedEncryption(makeId(20)),
+      },
+    });
+  }
+
+  updateName(orgId: string, name: string) {
+    return this._organization.model.organization.update({
+      where: {
+        id: orgId,
+      },
+      data: {
+        name,
+      },
+      select: {
+        id: true,
+        name: true,
       },
     });
   }
@@ -300,6 +391,28 @@ export class OrganizationRepository {
     });
   }
 
+  async createUserOnly(
+    body: Omit<CreateOrgUserDto, 'providerToken'> & { providerId?: string },
+    hasEmail: boolean,
+    ip: string,
+    userAgent: string
+  ) {
+    return this._user.model.user.create({
+      data: {
+        activated: body.provider !== 'LOCAL' || !hasEmail,
+        email: body.email,
+        password: body.password
+          ? AuthService.hashPassword(body.password)
+          : '',
+        providerName: body.provider,
+        providerId: body.providerId || '',
+        timezone: 0,
+        ip,
+        agent: userAgent,
+      },
+    });
+  }
+
   getOrgByCustomerId(customerId: string) {
     return this._organization.model.organization.findFirst({
       where: {
@@ -418,5 +531,57 @@ export class OrganizationRepository {
         shortlink,
       },
     });
+  }
+
+  async ensureTakkatechOrganization() {
+    const existing = await this._organization.model.organization.findFirst({
+      where: { name: 'Takkatech' },
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    return this._organization.model.organization.create({
+      data: {
+        name: 'Takkatech',
+        apiKey: AuthService.fixedEncryption(makeId(20)),
+        allowTrial: true,
+        isTrailing: true,
+      },
+    });
+  }
+
+  async createTakkaAdminUser(
+    body: { email: string; password: string },
+    hasEmail: boolean,
+    ip: string,
+    userAgent: string
+  ) {
+    const organization = await this.ensureTakkatechOrganization();
+
+    const user = await this._user.model.user.create({
+      data: {
+        activated: !hasEmail,
+        email: body.email,
+        password: AuthService.hashPassword(body.password),
+        providerName: 'LOCAL',
+        providerId: '',
+        timezone: 0,
+        ip,
+        agent: userAgent,
+        isTakkaAdmin: true,
+      },
+    });
+
+    await this._userOrg.model.userOrganization.create({
+      data: {
+        role: Role.SUPERADMIN,
+        userId: user.id,
+        organizationId: organization.id,
+      },
+    });
+
+    return { organization, user };
   }
 }

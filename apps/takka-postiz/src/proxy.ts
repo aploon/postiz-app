@@ -111,7 +111,10 @@ export async function proxy(request: NextRequest) {
   }
   if (nextUrl.pathname.startsWith('/auth') && !authCookie) {
     if (org) {
-      const redirect = NextResponse.redirect(new URL(`/`, nextUrl.href));
+      // Keep user on auth with a visible team flag (org cookie is often httpOnly).
+      const redirect = NextResponse.redirect(
+        new URL('/auth?team=1', nextUrl.href)
+      );
       redirect.cookies.set('org', org, {
         ...(!process.env.NOT_SECURED
           ? {
@@ -159,10 +162,7 @@ export async function proxy(request: NextRequest) {
     }
     if (nextUrl.pathname === '/') {
       return NextResponse.redirect(
-        new URL(
-          !!process.env.IS_GENERAL ? '/launches' : `/analytics`,
-          nextUrl.href
-        )
+        new URL('/dashboard', nextUrl.href)
       );
     }
 

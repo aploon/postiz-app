@@ -1,0 +1,14 @@
+{
+  "name": "takka-backend",
+  "version": "1.0.0",
+  "description": "Takka API — fork of postiz-backend",
+  "scripts": {
+    "dev": "dotenv -e ../../.env -- nest start --watch --entryFile=./apps/takka-backend/src/main",
+    "build": "cross-env NODE_ENV=production nest build",
+    "start": "dotenv -e ../../.env -- node --experimental-require-module ./dist/apps/takka-backend/src/main.js",
+    "pm2": "pm2 start npm --name takka-backend -- start"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

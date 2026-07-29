@@ -1,12 +1,12 @@
 import { CreateOrgUserDto } from '@gitroom/nestjs-libraries/dtos/auth/create.org.user.dto';
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { OrganizationRepository } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.repository';
 import { NotificationService } from '@gitroom/nestjs-libraries/database/prisma/notifications/notification.service';
 import { AddTeamMemberDto } from '@gitroom/nestjs-libraries/dtos/settings/add.team.member.dto';
 import { AuthService } from '@gitroom/helpers/auth/auth.service';
 import dayjs from 'dayjs';
 import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
-import { Organization, ShortLinkPreference } from '@prisma/client';
+import { Organization, ShortLinkPreference, User } from '@prisma/client';
 import { AutopostService } from '@gitroom/nestjs-libraries/database/prisma/autopost/autopost.service';
 
 @Injectable()
@@ -28,8 +28,29 @@ export class OrganizationService {
     );
   }
 
+  async createUserOnly(
+    body: Omit<CreateOrgUserDto, 'providerToken'> & { providerId?: string },
+    ip: string,
+    userAgent: string
+  ) {
+    return this._organizationRepository.createUserOnly(
+      body,
+      this._notificationsService.hasEmailProvider(),
+      ip,
+      userAgent
+    );
+  }
+
   async getCount() {
     return this._organizationRepository.getCount();
+  }
+
+  listForTakkaAdmin(user: User, page = 1) {
+    if (!user?.isTakkaAdmin) {
+      throw new ForbiddenException('Unauthorized');
+    }
+
+    return this._organizationRepository.listForTakkaAdmin(page);
   }
 
   async createMaxUser(id: string, name: string, saasName: string, email: string) {
@@ -63,6 +84,10 @@ export class OrganizationService {
 
   updateApiKey(orgId: string) {
     return this._organizationRepository.updateApiKey(orgId);
+  }
+
+  updateName(orgId: string, name: string) {
+    return this._organizationRepository.updateName(orgId, name);
   }
 
   getTeam(orgId: string) {
@@ -128,6 +153,19 @@ export class OrganizationService {
     return this._organizationRepository.updateShortlinkPreference(
       orgId,
       shortlink
+    );
+  }
+
+  createTakkaAdminUser(
+    body: { email: string; password: string },
+    ip: string,
+    userAgent: string
+  ) {
+    return this._organizationRepository.createTakkaAdminUser(
+      body,
+      this._notificationsService.hasEmailProvider(),
+      ip,
+      userAgent
     );
   }
 }
