@@ -93,9 +93,18 @@ export function RegisterAfter({
     useVariables();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const fireEvents = useFireEvents();
   const track = useTrack();
   const [datafast_visitor_id] = useCookie('datafast_visitor_id');
+  const [orgCookie] = useCookie('org');
+  const isTeamInvite = useMemo(() => {
+    return (
+      searchParams?.get('team') === '1' ||
+      !!searchParams?.get('org') ||
+      !!orgCookie
+    );
+  }, [searchParams, orgCookie]);
   const isAfterProvider = useMemo(() => {
     return !!token && !!provider;
   }, [token, provider]);
@@ -107,6 +116,7 @@ export function RegisterAfter({
     defaultValues: {
       providerToken: token,
       provider: provider,
+      company: '',
     },
   });
   const fetchData = useFetch();
@@ -116,6 +126,7 @@ export function RegisterAfter({
       method: 'POST',
       body: JSON.stringify({
         ...data,
+        ...(isTeamInvite ? { company: undefined } : {}),
         datafast_visitor_id,
       }),
     })
@@ -151,14 +162,16 @@ export function RegisterAfter({
         <div className="flex flex-col flex-1">
           <div>
             <h1 className="text-[40px] font-[500] -tracking-[0.8px] text-start cursor-pointer">
-              {t('sign_up', 'Sign Up')}
+              {isTeamInvite
+                ? t('join_organization', 'Join Organization')
+                : t('sign_up', 'Sign Up')}
             </h1>
           </div>
-          <div className="text-[14px] mt-[32px] mb-[12px]">
+          {/* <div className="text-[14px] mt-[32px] mb-[12px]">
             {t('continue_with', 'Continue With')}
-          </div>
+          </div> */}
           <div className="flex flex-col">
-            {!isAfterProvider &&
+            {/* {!isAfterProvider &&
               (!isGeneral ? (
                 <GithubProvider />
               ) : (
@@ -181,7 +194,7 @@ export function RegisterAfter({
                   <div className="px-[16px]">{t('or', 'or')}</div>
                 </div>
               </div>
-            )}
+            )} */}
             <div className="flex flex-col gap-[12px]">
               <div className="text-textColor">
                 {!isAfterProvider && (
@@ -203,14 +216,16 @@ export function RegisterAfter({
                     />
                   </>
                 )}
-                <Input
-                  label="Company"
-                  translationKey="label_company"
-                  {...form.register('company')}
-                  autoComplete="off"
-                  type="text"
-                  placeholder={t('label_company', 'Company')}
-                />
+                {!isTeamInvite && (
+                  <Input
+                    label="Company"
+                    translationKey="label_company"
+                    {...form.register('company')}
+                    autoComplete="off"
+                    type="text"
+                    placeholder={t('label_company', 'Company')}
+                  />
+                )}
               </div>
               <div className={clsx('text-[12px]')}>
                 {t(
@@ -243,7 +258,9 @@ export function RegisterAfter({
                     className="flex-1 rounded-[10px] !h-[52px]"
                     loading={loading}
                   >
-                    {t('create_account', 'Create Account')}
+                    {isTeamInvite
+                      ? t('join_organization', 'Join Organization')
+                      : t('create_account', 'Create Account')}
                   </Button>
                 </div>
                 <p className="mt-4 text-sm">

@@ -76,6 +76,9 @@ export class AuthService {
             addToOrg.role
           );
         } else {
+          if (!body.company || body.company.trim().length < 3) {
+            throw new Error('Company is required');
+          }
           const create = await this._organizationService.createOrgAndUser(
             body,
             ip,
