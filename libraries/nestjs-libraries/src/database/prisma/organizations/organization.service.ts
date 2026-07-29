@@ -28,6 +28,19 @@ export class OrganizationService {
     );
   }
 
+  async createUserOnly(
+    body: Omit<CreateOrgUserDto, 'providerToken'> & { providerId?: string },
+    ip: string,
+    userAgent: string
+  ) {
+    return this._organizationRepository.createUserOnly(
+      body,
+      this._notificationsService.hasEmailProvider(),
+      ip,
+      userAgent
+    );
+  }
+
   async getCount() {
     return this._organizationRepository.getCount();
   }

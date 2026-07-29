@@ -391,6 +391,28 @@ export class OrganizationRepository {
     });
   }
 
+  async createUserOnly(
+    body: Omit<CreateOrgUserDto, 'providerToken'> & { providerId?: string },
+    hasEmail: boolean,
+    ip: string,
+    userAgent: string
+  ) {
+    return this._user.model.user.create({
+      data: {
+        activated: body.provider !== 'LOCAL' || !hasEmail,
+        email: body.email,
+        password: body.password
+          ? AuthService.hashPassword(body.password)
+          : '',
+        providerName: body.provider,
+        providerId: body.providerId || '',
+        timezone: 0,
+        ip,
+        agent: userAgent,
+      },
+    });
+  }
+
   getOrgByCustomerId(customerId: string) {
     return this._organization.model.organization.findFirst({
       where: {

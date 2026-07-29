@@ -57,23 +57,34 @@ export class AuthService {
           throw new Error('Registration is disabled');
         }
 
-        const create = await this._organizationService.createOrgAndUser(
-          body,
-          ip,
-          userAgent
-        );
+        let createdUser: any;
+        let addedOrg: any = false;
 
-        const addedOrg =
-          addToOrg && typeof addToOrg !== 'boolean'
-            ? await this._organizationService.addUserToOrg(
-                create.users[0].user.id,
-                addToOrg.id,
-                addToOrg.orgId,
-                addToOrg.role
-              )
-            : false;
+        // Team-invite flow (addToOrg is an object) :
+        // - never create a new organization
+        // - create user only, then attach it to the invited org
+        if (addToOrg && typeof addToOrg !== 'boolean') {
+          createdUser = await this._organizationService.createUserOnly(
+            body,
+            ip,
+            userAgent
+          );
+          addedOrg = await this._organizationService.addUserToOrg(
+            createdUser.id,
+            addToOrg.id,
+            addToOrg.orgId,
+            addToOrg.role
+          );
+        } else {
+          const create = await this._organizationService.createOrgAndUser(
+            body,
+            ip,
+            userAgent
+          );
+          createdUser = create.users[0].user;
+        }
 
-        const obj = { addedOrg, jwt: await this.jwt(create.users[0].user) };
+        const obj = { addedOrg, jwt: await this.jwt(createdUser) };
         await this._emailService.sendEmail(
           body.email,
           'Activate your account',

@@ -104,6 +104,27 @@ export class AuthController {
         }
       }
 
+      // Team-invite flow: we used cookie `org` only during registration.
+      // Clear it so it can't affect later actions.
+      if (typeof req?.cookies?.org === 'string' && req.cookies.org) {
+        response.cookie('org', '', {
+          domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
+          path: '/',
+          ...(!process.env.NOT_SECURED
+            ? {
+                secure: true,
+                httpOnly: true,
+                sameSite: 'none',
+              }
+            : {}),
+          expires: new Date(0),
+        });
+
+        if (process.env.NOT_SECURED) {
+          response.header('org', '');
+        }
+      }
+
       Sentry.metrics.count('new_user', 1);
       response.header('onboarding', 'true');
       response.status(200).json({
