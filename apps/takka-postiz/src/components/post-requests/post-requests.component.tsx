@@ -327,13 +327,28 @@ const PostRequestForm = ({
 
         <div className="flex flex-col gap-[8px]">
           <div className="text-[14px]">{t('documents', 'Documents')}</div>
-          <input
-            ref={fileRef}
-            type="file"
-            multiple
-            className="text-[13px]"
-            onChange={selectFiles}
-          />
+          <label
+            className="inline-flex items-center px-[12px] py-[8px] bg-newBgColorInner border border-newTableBorder rounded-[8px] text-[13px] cursor-pointer hover:bg-newTableHeader transition-colors w-full gap-[8px]"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-[18px] w-[18px] text-newTableText"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" />
+            </svg>
+            <span>{t('choose_files', 'Choose files')}</span>
+            <input
+              ref={fileRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={selectFiles}
+            />
+          </label>
+    
           {existingDocuments.map((doc) => (
             <div
               key={doc.id}
