@@ -70,7 +70,7 @@ export const useMenuItem = () => {
       role: [...ALL_CLIENT_ROLES],
     },
     {
-      name: t('post_requests', 'Request Post'),
+      name: t('post_requests', 'Post Requests'),
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"

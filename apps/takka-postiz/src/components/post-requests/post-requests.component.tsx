@@ -69,16 +69,29 @@ const STATUS_STYLES: Record<string, string> = {
   PUBLISHED: 'bg-emerald-500/15 text-emerald-400',
 };
 
-const StatusBadge = ({ status }: { status: string }) => (
-  <span
-    className={clsx(
-      'inline-flex items-center h-[28px] px-[12px] rounded-[6px] text-[12px] font-[600] tracking-wide uppercase whitespace-nowrap',
-      STATUS_STYLES[status] || 'bg-newColColor text-newTableText'
-    )}
-  >
-    {status}
-  </span>
-);
+const STATUS_LABEL_KEYS: Record<string, string> = {
+  DRAFT: 'draft',
+  REQUESTED: 'requested',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  SCHEDULED: 'scheduled',
+  PUBLISHED: 'published',
+};
+
+const StatusBadge = ({ status }: { status: string }) => {
+  const t = useT();
+  const key = STATUS_LABEL_KEYS[status] || status.toLowerCase();
+  return (
+    <span
+      className={clsx(
+        'inline-flex items-center h-[28px] px-[12px] rounded-[6px] text-[12px] font-[600] tracking-wide uppercase whitespace-nowrap',
+        STATUS_STYLES[status] || 'bg-newColColor text-newTableText'
+      )}
+    >
+      {t(key, status)}
+    </span>
+  );
+};
 
 const ActionButton = ({
   children,
@@ -590,8 +603,13 @@ export const PostRequestsComponent = () => {
         !(await deleteDialog(
           t(
             'are_you_sure_you_want_to_change_status',
-            `Change status to ${status}?`,
-            { status }
+            'Change status to {{status}}?',
+            {
+              status: t(
+                STATUS_LABEL_KEYS[status] || status.toLowerCase(),
+                status
+              ),
+            }
           ),
           t('yes_confirm', 'Yes, confirm!')
         ))
@@ -708,7 +726,7 @@ export const PostRequestsComponent = () => {
               <option value="">{t('all_statuses', 'All statuses')}</option>
               {ADMIN_STATUSES.map((status) => (
                 <option key={status} value={status}>
-                  {status}
+                  {t(STATUS_LABEL_KEYS[status], status)}
                 </option>
               ))}
             </select>

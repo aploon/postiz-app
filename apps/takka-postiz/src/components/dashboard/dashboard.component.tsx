@@ -54,16 +54,29 @@ const STATUS_STYLES: Record<string, string> = {
   PUBLISHED: 'bg-emerald-500/15 text-emerald-400',
 };
 
-const StatusBadge = ({ status }: { status: string }) => (
-  <span
-    className={clsx(
-      'inline-flex items-center h-[24px] px-[10px] rounded-[6px] text-[11px] font-[600] tracking-wide uppercase whitespace-nowrap',
-      STATUS_STYLES[status] || 'bg-newColColor text-newTableText'
-    )}
-  >
-    {status}
-  </span>
-);
+const STATUS_LABEL_KEYS: Record<string, string> = {
+  DRAFT: 'draft',
+  REQUESTED: 'requested',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  SCHEDULED: 'scheduled',
+  PUBLISHED: 'published',
+};
+
+const StatusBadge = ({ status }: { status: string }) => {
+  const t = useT();
+  const key = STATUS_LABEL_KEYS[status] || status.toLowerCase();
+  return (
+    <span
+      className={clsx(
+        'inline-flex items-center h-[24px] px-[10px] rounded-[6px] text-[11px] font-[600] tracking-wide uppercase whitespace-nowrap',
+        STATUS_STYLES[status] || 'bg-newColColor text-newTableText'
+      )}
+    >
+      {t(key, status)}
+    </span>
+  );
+};
 
 const useDashboard = () => {
   const fetch = useFetch();
