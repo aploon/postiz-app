@@ -133,14 +133,14 @@ pnpm run dev:takka-stack
 ### Créer un SUPERADMIN plateforme (`isSuperAdmin`)
 
 Compte plateforme (impersonation / routes admin). Distinct de `isTakkaAdmin` et du rôle org `SUPERADMIN`.  
-Crée uniquement un utilisateur (pas d’organisation).
+Crée un utilisateur activé (`isSuperAdmin: true`) et le rattache à l’organisation **Takkatech** (requis pour la session).
 
 ```bash
 pnpm run create:superadmin -- --email=admin@example.com --password=secret123
 ```
 
-- Si l’email n’existe pas : crée l’utilisateur (`isSuperAdmin: true`, activé).
-- Si l’email existe déjà (LOCAL) : le promeut en superadmin et met à jour le mot de passe.
+- Si l’email n’existe pas : crée l’utilisateur + membership Takkatech.
+- Si l’email existe déjà (LOCAL) : le promeut en superadmin, met à jour le mot de passe, et ajoute le membership Takkatech s’il manque.
 
 Temporal doit être joignable (`TEMPORAL_ADDRESS`, stack Docker Takka), comme pour le backend.
 

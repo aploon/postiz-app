@@ -590,6 +590,8 @@ export class OrganizationRepository {
     email: string;
     password: string;
   }) {
+    const organization = await this.ensureTakkatechOrganization();
+
     const existing = await this._user.model.user.findFirst({
       where: {
         email: body.email,
@@ -612,6 +614,23 @@ export class OrganizationRepository {
           activated: true,
         },
       });
+
+      const membership = await this._userOrg.model.userOrganization.findFirst({
+        where: {
+          userId: user.id,
+          organizationId: organization.id,
+        },
+      });
+      if (!membership) {
+        await this._userOrg.model.userOrganization.create({
+          data: {
+            role: Role.SUPERADMIN,
+            userId: user.id,
+            organizationId: organization.id,
+          },
+        });
+      }
+
       return { created: false as const, user };
     }
 
@@ -632,6 +651,14 @@ export class OrganizationRepository {
         email: true,
         isSuperAdmin: true,
         activated: true,
+      },
+    });
+
+    await this._userOrg.model.userOrganization.create({
+      data: {
+        role: Role.SUPERADMIN,
+        userId: user.id,
+        organizationId: organization.id,
       },
     });
 
