@@ -21,8 +21,15 @@ export class PostRequestService {
   constructor(private _postRequestRepository: PostRequestRepository) {}
 
   list(org: Organization, user: User, page = 1) {
-    const createdByUserId = this.isRestrictedUser(org) ? user.id : undefined;
-    return this._postRequestRepository.list(org.id, page, createdByUserId);
+    if (this.isRestrictedUser(org)) {
+      return this._postRequestRepository.list(org.id, page, {
+        createdByUserId: user.id,
+      });
+    }
+
+    return this._postRequestRepository.list(org.id, page, {
+      viewerUserId: user.id,
+    });
   }
 
   listAdmin(
@@ -39,6 +46,9 @@ export class PostRequestService {
     }
 
     const status = this.parseStatus(filters.status);
+    if (status === PostRequestStatus.DRAFT) {
+      throw new BadRequestException('Draft post requests are not visible to admins');
+    }
 
     return this._postRequestRepository.listAdmin({
       page: filters.page || 1,
@@ -59,7 +69,7 @@ export class PostRequestService {
   async get(org: Organization, user: User, id: string) {
     if (user?.isTakkaAdmin) {
       const postRequest = await this._postRequestRepository.getByIdAdmin(id);
-      if (!postRequest) {
+      if (!postRequest || postRequest.status === PostRequestStatus.DRAFT) {
         throw new NotFoundException('Post request not found');
       }
       return postRequest;
@@ -74,6 +84,15 @@ export class PostRequestService {
     if (!postRequest) {
       throw new NotFoundException('Post request not found');
     }
+
+    // Org admins can only open another user's draft if they are the author.
+    if (
+      postRequest.status === PostRequestStatus.DRAFT &&
+      postRequest.createdByUserId !== user.id
+    ) {
+      throw new NotFoundException('Post request not found');
+    }
+
     return postRequest;
   }
 
@@ -119,8 +138,12 @@ export class PostRequestService {
       throw new ForbiddenException('Unauthorized');
     }
 
+    if (status === PostRequestStatus.DRAFT) {
+      throw new BadRequestException('Cannot set status to DRAFT');
+    }
+
     const postRequest = await this._postRequestRepository.getByIdAdmin(id);
-    if (!postRequest) {
+    if (!postRequest || postRequest.status === PostRequestStatus.DRAFT) {
       throw new NotFoundException('Post request not found');
     }
 

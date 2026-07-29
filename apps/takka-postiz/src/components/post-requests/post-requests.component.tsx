@@ -46,7 +46,6 @@ type PostRequestFormValues = {
 
 const EDITABLE = ['DRAFT', 'REQUESTED'];
 const ADMIN_STATUSES = [
-  'DRAFT',
   'REQUESTED',
   'APPROVED',
   'REJECTED',

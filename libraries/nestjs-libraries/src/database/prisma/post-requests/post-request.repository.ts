@@ -41,13 +41,29 @@ export class PostRequestRepository {
     private _media: PrismaRepository<'media'>
   ) {}
 
-  async list(orgId: string, page: number, createdByUserId?: string) {
+  async list(
+    orgId: string,
+    page: number,
+    options?: { createdByUserId?: string; viewerUserId?: string }
+  ) {
     const pageSize = 10;
     const pageNum = Math.max(0, (page || 1) - 1);
-    const where = {
-      organizationId: orgId,
-      ...(createdByUserId ? { createdByUserId } : {}),
-    };
+    // Restricted users only see their own requests (including drafts).
+    // Org admins see all non-drafts, plus their own drafts.
+    const where = options?.createdByUserId
+      ? {
+          organizationId: orgId,
+          createdByUserId: options.createdByUserId,
+        }
+      : {
+          organizationId: orgId,
+          OR: [
+            { status: { not: PostRequestStatus.DRAFT } },
+            ...(options?.viewerUserId
+              ? [{ createdByUserId: options.viewerUserId }]
+              : []),
+          ],
+        };
 
     const [total, results] = await Promise.all([
       this._postRequest.model.postRequest.count({ where }),
@@ -72,11 +88,14 @@ export class PostRequestRepository {
     const pageNum = Math.max(0, (filters.page || 1) - 1);
     const trimmedSearch = filters.search?.trim();
 
+    // Takka admins never see drafts — only submitted requests and beyond.
     const where = {
       ...(filters.organizationId
         ? { organizationId: filters.organizationId }
         : {}),
-      ...(filters.status ? { status: filters.status } : {}),
+      ...(filters.status
+        ? { status: filters.status }
+        : { status: { not: PostRequestStatus.DRAFT } }),
       ...(trimmedSearch
         ? {
             OR: [
@@ -117,6 +136,9 @@ export class PostRequestRepository {
 
   async listOrganizationsWithRequests() {
     const rows = await this._postRequest.model.postRequest.findMany({
+      where: {
+        status: { not: PostRequestStatus.DRAFT },
+      },
       distinct: ['organizationId'],
       select: {
         organizationId: true,
