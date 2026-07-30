@@ -137,6 +137,14 @@ function getDateRange(display: string, referenceDate?: string) {
   }
 }
 
+// The week and month grids need a wide viewport, so narrow screens start on the list.
+function getDefaultDisplay() {
+  if (typeof window === 'undefined') {
+    return 'week';
+  }
+  return window.matchMedia('(max-width: 1023px)').matches ? 'list' : 'week';
+}
+
 export const CalendarWeekProvider: FC<{
   children: ReactNode;
   integrations: Integrations[];
@@ -145,7 +153,7 @@ export const CalendarWeekProvider: FC<{
   const [internalData, setInternalData] = useState([] as any[]);
   const [trendings] = useState<string[]>([]);
   const searchParams = useSearchParams();
-  const [displaySaved, setDisplaySaved] = useCookie('calendar-display', 'week');
+  const [displaySaved, setDisplaySaved] = useCookie('calendar-display', getDefaultDisplay());
   const display = searchParams.get('display') || displaySaved;
 
   // List view state

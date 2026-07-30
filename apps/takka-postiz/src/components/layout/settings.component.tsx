@@ -51,7 +51,7 @@ export const SettingsPopup: FC<{
 
   return (
     <>
-      <div className="bg-newBgColorInner p-[20px] flex flex-col transition-all w-[260px]">
+      <div className="bg-newBgColorInner p-[20px] flex flex-col transition-all w-full lg:w-[260px]">
         <div className="flex flex-1 flex-col gap-[15px]">
           {list.map(({ tab: tabKey, label }) => (
             <div
@@ -82,7 +82,7 @@ export const SettingsPopup: FC<{
           )}
         </div>
       </div>
-      <div className="bg-newBgColorInner flex-1 flex-col flex p-[20px] gap-[12px]">
+      <div className="bg-newBgColorInner flex-1 min-w-0 flex-col flex p-[12px] lg:p-[20px] gap-[12px]">
         <div className="w-full mx-auto gap-[24px] flex flex-col relative rounded-[4px]">
           {tab === 'global_settings' && (
             <div>
