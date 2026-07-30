@@ -5,6 +5,7 @@ import '../global.scss';
 import 'react-tooltip/dist/react-tooltip.css';
 import LayoutContext from '@gitroom/takka-postiz/components/layout/layout.context';
 import { ReactNode } from 'react';
+import type { Viewport } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import PlausibleProvider from 'next-plausible';
 import clsx from 'clsx';
@@ -29,6 +30,12 @@ const jakartaSans = Plus_Jakarta_Sans({
   style: ['normal', 'italic'],
   subsets: ['latin'],
 });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const cookieStore = await cookies();

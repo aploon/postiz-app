@@ -24,7 +24,7 @@ export const Support = () => {
   return (
     <div
       id="support-discord"
-      className="bg-customColor39 w-[194px] h-[58px] fixed end-[20px] bottom-[20px] z-[500] text-[16px] text-customColor40 rounded-[30px] !rounded-br-[0] cursor-pointer flex justify-center items-center gap-[10px]"
+      className="bg-customColor39 w-[52px] h-[52px] lg:w-[194px] lg:h-[58px] fixed end-[12px] bottom-[12px] lg:end-[20px] lg:bottom-[20px] z-[500] text-[16px] text-customColor40 rounded-[30px] !rounded-br-[0] cursor-pointer flex justify-center items-center gap-[10px]"
       onClick={() => window.open(discordUrl)}
     >
       <div>
@@ -42,7 +42,9 @@ export const Support = () => {
           />
         </svg>
       </div>
-      <div>{t('discord_support', 'Discord Support')}</div>
+      <div className="hidden lg:block">
+        {t('discord_support', 'Discord Support')}
+      </div>
     </div>
   );
 };
