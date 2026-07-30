@@ -247,9 +247,9 @@ export const DashboardComponent = () => {
   }
 
   return (
-    <div className="bg-newBgColorInner flex-1 flex-col flex p-[20px] gap-[20px]">
+    <div className="bg-newBgColorInner flex-1 min-w-0 flex-col flex p-[12px] lg:p-[20px] gap-[20px]">
       <div className="flex items-start justify-between gap-[12px] flex-wrap">
-        <div>
+        <div className="min-w-0">
           <h1 className="text-[24px] font-[600]">{title}</h1>
           <p className="text-newTableText text-[14px] mt-[4px]">{description}</p>
           {!!user?.name && (

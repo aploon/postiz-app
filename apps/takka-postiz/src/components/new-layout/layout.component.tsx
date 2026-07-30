@@ -105,8 +105,8 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
                   id="left-menu"
                   onClick={() => setMenuOpen(false)}
                   className={clsx(
-                    'fixed top-0 bottom-0 start-0 z-[600] w-[240px] overflow-y-auto bg-newBgColorInner px-[10px] flex flex-1',
-                    'lg:z-auto lg:flex lg:w-[64px] lg:start-[17px] lg:px-0 lg:overflow-visible lg:bg-transparent',
+                    'fixed top-0 bottom-0 start-0 z-[600] w-[200px] overflow-y-auto bg-newBgColorInner px-[10px] flex flex-1',
+                    'lg:z-auto lg:flex lg:w-[80px] lg:start-[12px] lg:px-[8px] lg:overflow-visible lg:bg-transparent',
                     !menuOpen && 'hidden',
                     user?.admin && 'pt-[60px]'
                   )}
