@@ -649,12 +649,12 @@ export const PostRequestsComponent = () => {
     if (isTakkaAdmin) {
       // `auto` peut faire varier la taille de la colonne "Actions" selon le contenu
       // (header vs lignes), ce qui désaligne visuellement les colonnes.
-      return 'grid-cols-[minmax(0,1.4fr)_120px_110px_130px_minmax(0,1fr)_300px]';
+      return 'min-w-[980px] grid-cols-[minmax(0,1.4fr)_120px_110px_130px_minmax(0,1fr)_300px]';
     }
     if (showCreator) {
-      return 'grid-cols-[minmax(0,1.5fr)_110px_130px_minmax(0,1fr)_300px]';
+      return 'min-w-[900px] grid-cols-[minmax(0,1.5fr)_110px_130px_minmax(0,1fr)_300px]';
     }
-    return 'grid-cols-[minmax(0,1.5fr)_110px_130px_300px]';
+    return 'min-w-[780px] grid-cols-[minmax(0,1.5fr)_110px_130px_300px]';
   }, [isTakkaAdmin, showCreator]);
 
   return (
@@ -734,7 +734,7 @@ export const PostRequestsComponent = () => {
         </div>
       )}
 
-      <div className="border border-newTableBorder rounded-[8px] overflow-hidden">
+      <div className="border border-newTableBorder rounded-[8px] overflow-hidden overflow-x-auto">
         {isLoading && (
           <div className="px-[16px] py-[20px] text-newTableText text-[14px]">
             {t('loading', 'Loading...')}

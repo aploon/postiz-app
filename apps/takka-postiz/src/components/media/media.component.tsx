@@ -488,14 +488,14 @@ export const MediaBox: FC<{
       <div className="flex flex-col flex-1">
         <div
           className={clsx(
-            'flex items-center gap-[12px]',
+            'flex flex-wrap items-center gap-[12px]',
             !isLoading &&
               !data?.results?.length &&
               !debouncedSearch &&
               'hidden'
           )}
         >
-          <div className="flex-1">
+          <div className="flex-1 min-w-[180px]">
             <input
               type="text"
               value={search}

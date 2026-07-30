@@ -220,7 +220,7 @@ export const Plugs = () => {
           ))}
         </div>
       </div>
-      <div className="bg-newBgColorInner flex-1 flex-col flex p-[20px] gap-[12px]">
+      <div className="bg-newBgColorInner flex-1 min-w-0 flex-col flex p-[12px] lg:p-[20px] gap-[12px]">
         <PlugsContext.Provider value={currentIntegrationPlug}>
           <Plug />
         </PlugsContext.Provider>
