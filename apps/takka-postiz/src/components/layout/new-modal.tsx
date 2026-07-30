@@ -198,10 +198,8 @@ export const Component: FC<{
               className={clsx(
                 !modal.removeLayout &&
                   'gap-[20px] p-[16px] sm:gap-[40px] sm:p-[32px]',
-                'bg-newBgColorInner mx-auto flex flex-col w-fit rounded-[24px] relative',
-                modal.size
-                  ? ''
-                  : 'max-w-[calc(100vw-24px)] sm:min-w-[600px] sm:max-w-none',
+                'bg-newBgColorInner mx-auto flex flex-col w-full sm:w-fit rounded-[24px] relative',
+                modal.size ? '' : 'sm:min-w-[600px]',
                 modal.fullScreen && 'h-full'
               )}
               {...((!!modal.size || !!modal.height || !!modal.maxSize) && {
