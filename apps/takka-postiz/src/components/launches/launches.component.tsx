@@ -588,7 +588,7 @@ export const LaunchesComponent = () => {
             </div>
           </div>
         </div>
-        <div className="bg-newBgColorInner flex-1 min-w-0 min-h-[60vh] lg:min-h-0 flex-col flex p-[12px] lg:p-[20px] gap-[12px]">
+        <div className="bg-newBgColorInner flex-1 min-w-0 min-h-[80vh] lg:min-h-0 flex-col flex p-[12px] lg:p-[20px] gap-[12px]">
           <Filters />
           <div className="flex-1 flex">
             <Calendar />

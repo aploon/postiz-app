@@ -105,7 +105,7 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
                   id="left-menu"
                   onClick={() => setMenuOpen(false)}
                   className={clsx(
-                    'fixed top-0 bottom-0 start-0 z-[600] w-[200px] overflow-y-auto bg-newBgColorInner px-[10px] flex flex-1',
+                    'fixed top-0 bottom-0 start-[0px] z-[600] w-[200px] overflow-y-auto bg-newBgColorInner px-[10px] flex flex-1',
                     'lg:z-auto lg:flex lg:w-[80px] lg:start-[12px] lg:px-[8px] lg:overflow-visible lg:bg-transparent',
                     !menuOpen && 'hidden',
                     user?.admin && 'pt-[60px]'
@@ -117,7 +117,7 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0 bg-newBgLineColor rounded-[12px] overflow-x-hidden overflow-y-auto lg:overflow-hidden flex flex-col gap-[1px] blurMe">
-                  <div className="flex flex-col lg:flex-row bg-newBgColorInner lg:h-[80px] px-[12px] lg:px-[20px] py-[10px] lg:py-0 gap-[10px] lg:gap-0 lg:items-center">
+                  <div className="flex bg-newBgColorInner min-h-[60px] lg:h-[80px] px-[12px] lg:px-[20px] gap-[10px] items-center">
                     <div className="text-[18px] lg:text-[24px] font-[600] flex flex-1 min-w-0 items-center gap-[10px]">
                       <button
                         type="button"
@@ -140,7 +140,7 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
                           />
                         </svg>
                       </button>
-                      <div className="flex flex-1 min-w-0 truncate">
+                      <div className="hidden lg:flex flex-1 min-w-0 truncate">
                         <Title />
                       </div>
                     </div>
