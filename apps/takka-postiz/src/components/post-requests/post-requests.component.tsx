@@ -658,9 +658,9 @@ export const PostRequestsComponent = () => {
   }, [isTakkaAdmin, showCreator]);
 
   return (
-    <div className="bg-newBgColorInner flex-1 flex-col flex p-[20px] gap-[16px]">
-      <div className="flex items-center justify-between gap-[12px]">
-        <div>
+    <div className="bg-newBgColorInner flex-1 min-w-0 flex-col flex p-[12px] lg:p-[20px] gap-[16px]">
+      <div className="flex flex-wrap items-center justify-between gap-[12px]">
+        <div className="min-w-0">
           <h1 className="text-[24px] font-[600]">
             {t('post_requests', 'Post Requests')}
           </h1>
