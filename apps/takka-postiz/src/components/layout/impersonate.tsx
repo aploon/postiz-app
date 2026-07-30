@@ -112,7 +112,7 @@ const ChargesModal: FC<{ close: () => void }> = ({ close }) => {
   }, []);
 
   return (
-    <div className="flex flex-col gap-[16px] min-w-[500px]">
+    <div className="flex flex-col gap-[16px] sm:min-w-[500px]">
       <div className="max-h-[400px] overflow-y-auto">
         {!charges?.length ? (
           <div className="text-center py-[20px] text-newTextColor/60">
@@ -335,7 +335,7 @@ const AddAnnouncementModal: FC<{ close: () => void }> = ({ close }) => {
   }, [title, description, color]);
 
   return (
-    <div className="flex flex-col gap-[16px] min-w-[500px]">
+    <div className="flex flex-col gap-[16px] sm:min-w-[500px]">
       <Input
         label={t('announcement_title', 'Title')}
         name="title"

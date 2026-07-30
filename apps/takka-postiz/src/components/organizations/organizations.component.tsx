@@ -50,7 +50,7 @@ export const OrganizationsComponent = () => {
   const results = data?.results || [];
 
   return (
-    <div className="bg-newBgColorInner flex-1 flex-col flex p-[20px] gap-[16px]">
+    <div className="bg-newBgColorInner flex-1 min-w-0 flex-col flex p-[12px] lg:p-[20px] gap-[16px]">
       <div>
         <h1 className="text-[24px] font-[600]">
           {t('organizations', 'Organizations')}

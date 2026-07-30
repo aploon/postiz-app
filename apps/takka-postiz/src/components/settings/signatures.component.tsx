@@ -66,11 +66,11 @@ export const SignaturesComponent: FC<{
           'You can add signatures to your account to be used in your posts.'
         )}
       </div>
-      <div className="my-[16px] mt-[16px] bg-sixth border-fifth items-center border rounded-[4px] p-[24px] flex gap-[24px]">
-        <div className="flex flex-col w-full">
+      <div className="my-[16px] mt-[16px] bg-sixth border-fifth items-center border rounded-[4px] p-[12px] sm:p-[24px] flex gap-[24px]">
+        <div className="flex flex-col w-full overflow-x-auto">
           {!!data?.length && (
             <div
-              className={`grid ${
+              className={`grid min-w-[520px] ${
                 !!appendSignature
                   ? 'grid-cols-[1fr,1fr,1fr,1fr,1fr]'
                   : 'grid-cols-[1fr,1fr,1fr,1fr]'

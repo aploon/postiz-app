@@ -121,7 +121,7 @@ const RequestRow = ({
   <button
     type="button"
     onClick={onClick}
-    className="w-full text-start grid grid-cols-[minmax(0,1.5fr)_110px_minmax(0,1fr)_120px] gap-[12px] px-[14px] py-[12px] items-center border-b border-newTableBorder last:border-b-0 hover:bg-boxHover transition-colors"
+    className="w-full text-start grid grid-cols-[minmax(0,1fr)_110px] sm:grid-cols-[minmax(0,1.5fr)_110px_minmax(0,1fr)_120px] gap-[12px] px-[14px] py-[12px] items-center border-b border-newTableBorder last:border-b-0 hover:bg-boxHover transition-colors"
   >
     <div className="min-w-0">
       <div className="text-[14px] font-[500] truncate">{item.title}</div>
@@ -238,7 +238,7 @@ export const DashboardComponent = () => {
 
   if (isLoading || !data) {
     return (
-      <div className="bg-newBgColorInner flex-1 flex-col flex p-[20px] gap-[16px]">
+      <div className="bg-newBgColorInner flex-1 min-w-0 flex-col flex p-[12px] lg:p-[20px] gap-[16px]">
         <div className="text-newTableText text-[14px]">
           {t('loading', 'Loading...')}
         </div>

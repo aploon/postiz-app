@@ -69,7 +69,7 @@ const AnnouncementDetailModal: FC<{
   }, [announcement.id, onDelete]);
 
   return (
-    <div className="flex flex-col gap-[16px] min-w-[500px]">
+    <div className="flex flex-col gap-[16px] sm:min-w-[500px]">
       <div className="text-newTextColor/60 text-[13px]">
         {new Date(announcement.createdAt).toLocaleDateString()}
       </div>

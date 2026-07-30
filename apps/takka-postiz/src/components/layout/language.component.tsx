@@ -93,11 +93,11 @@ export const ChangeLanguageComponent = () => {
 
   return (
     <div className="relative">
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {availableLanguages.map((language) => (
           <div
             className={clsx(
-              'flex items-center flex-col bg-newTableHeader hover:bg-newTableBorder p-[20px] cursor-pointer gap-2',
+              'flex items-center flex-col bg-newTableHeader hover:bg-newTableBorder p-[12px] sm:p-[20px] cursor-pointer gap-2 text-center',
               language === currentLanguage ? 'border border-textColor' : ''
             )}
             key={language}

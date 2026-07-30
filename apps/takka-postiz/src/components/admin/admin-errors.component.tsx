@@ -327,8 +327,8 @@ export const AdminErrorsComponent: FC = () => {
       ) : !data || data.items.length === 0 ? (
         <div className="opacity-70">No errors found.</div>
       ) : (
-        <div className="border border-newTableBorder rounded-[8px] overflow-hidden">
-          <div className="grid grid-cols-[170px_120px_220px_1fr_220px] gap-[12px] px-[12px] py-[10px] bg-newBgColorInner text-[12px] uppercase opacity-70 border-b border-newTableBorder">
+        <div className="border border-newTableBorder rounded-[8px] overflow-hidden overflow-x-auto">
+          <div className="grid min-w-[900px] grid-cols-[170px_120px_220px_1fr_220px] gap-[12px] px-[12px] py-[10px] bg-newBgColorInner text-[12px] uppercase opacity-70 border-b border-newTableBorder">
             <div>Created</div>
             <div>Platform</div>
             <div>User / Org</div>
@@ -349,7 +349,7 @@ export const AdminErrorsComponent: FC = () => {
             return (
               <div
                 key={row.id}
-                className="grid grid-cols-[170px_120px_220px_1fr_220px] gap-[12px] px-[12px] py-[10px] text-[13px] border-b border-newTableBorder last:border-b-0 items-start"
+                className="grid min-w-[900px] grid-cols-[170px_120px_220px_1fr_220px] gap-[12px] px-[12px] py-[10px] text-[13px] border-b border-newTableBorder last:border-b-0 items-start"
               >
                 <div className="opacity-90">
                   {new Date(row.createdAt).toLocaleString()}

@@ -175,11 +175,14 @@ export const TeamsComponent = () => {
       <div className="my-[16px] mt-[16px] bg-sixth border-fifth border rounded-[4px] p-[24px] flex flex-col gap-[24px]">
         <div className="flex flex-col gap-[16px]">
           {(data || []).map((p) => (
-            <div key={p.user.id} className="flex items-center">
-              <div className="flex-1">
+            <div
+              key={p.user.id}
+              className="flex flex-wrap items-center gap-[8px]"
+            >
+              <div className="flex-1 min-w-[140px] break-words">
                 {capitalize(p.user.email.split('@')[0]).split('.')[0]}
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-[80px]">
                 {p.role === 'USER'
                   ? t('user', 'User')
                   : p.role === 'ADMIN'

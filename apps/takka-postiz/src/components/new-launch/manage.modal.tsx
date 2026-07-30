@@ -436,16 +436,21 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
   );
 
   return (
-    <div className="w-full h-full flex-1 p-[40px] flex relative">
+    <div className="w-full h-full flex-1 p-[8px] lg:p-[40px] flex relative">
       <div className="flex flex-1 bg-newBgColorInner rounded-[20px] flex-col">
-        <div className="flex-1 flex">
-          <div className="flex flex-col flex-1 border-e border-newBorder">
-            <div className="bg-newBgColor h-[65px] rounded-s-[20px] !rounded-b-[0] flex items-center gap-[12px] px-[20px] text-[20px] font-[600]">
-              {t('create_post_title', 'Create Post')}
-              <CreationMethodBadge
-                creationMethod={existingData?.posts?.[0]?.creationMethod}
-                size="sm"
-              />
+        <div className="flex-1 flex flex-col lg:flex-row min-h-0">
+          <div className="flex flex-col flex-[3] lg:flex-1 min-h-0 border-b lg:border-b-0 lg:border-e border-newBorder">
+            <div className="bg-newBgColor h-[65px] rounded-s-[20px] !rounded-b-[0] flex items-center gap-[12px] px-[12px] lg:px-[20px] text-[16px] lg:text-[20px] font-[600]">
+              <div className="flex flex-1 min-w-0 items-center gap-[12px]">
+                {t('create_post_title', 'Create Post')}
+                <CreationMethodBadge
+                  creationMethod={existingData?.posts?.[0]?.creationMethod}
+                  size="sm"
+                />
+              </div>
+              <div className="cursor-pointer lg:hidden">
+                <CloseIcon onClick={askClose} className="text-[#A3A3A3]" />
+              </div>
             </div>
             <div className="flex-1 flex flex-col gap-[16px]">
               <div
@@ -455,8 +460,8 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
                   id="social-content"
                   className="gap-[32px] flex flex-col pe-[8px] pt-[20px] ps-[20px] absolute top-0 left-0 w-full h-full overflow-x-hidden overflow-y-scroll scrollbar scrollbar-thumb-newColColor scrollbar-track-newBgColorInner"
                 >
-                  <div className="flex w-full">
-                    <div className="flex flex-1">
+                  <div className="flex flex-wrap gap-[8px] w-full">
+                    <div className="flex flex-1 min-w-0">
                       <PicksSocialsComponent toolTip={true} />
                     </div>
                     <div>
@@ -529,10 +534,10 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
               </div>
             </div>
           </div>
-          <div className="w-[580px] flex flex-col">
-            <div className="bg-newBgColor h-[65px] rounded-e-[20px] !rounded-b-[0] flex items-center px-[20px] text-[20px] font-[600]">
+          <div className="w-full lg:w-[580px] flex-[2] lg:flex-none min-h-0 flex flex-col">
+            <div className="bg-newBgColor h-[65px] rounded-e-[0px] lg:rounded-e-[20px] !rounded-b-[0] flex items-center px-[12px] lg:px-[20px] text-[16px] lg:text-[20px] font-[600]">
               <div className="flex-1">{t('post_preview', 'Post Preview')}</div>
-              <div className="cursor-pointer">
+              <div className="cursor-pointer hidden lg:block">
                 <CloseIcon onClick={askClose} className="text-[#A3A3A3]" />
               </div>
             </div>
@@ -546,8 +551,8 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
             </div>
           </div>
         </div>
-        <div className="select-none h-[84px] py-[20px] border-t border-newBorder flex items-center">
-          <div className="flex-1 flex ps-[20px] gap-[8px]">
+        <div className="select-none min-h-[84px] lg:h-[84px] py-[16px] lg:py-[20px] border-t border-newBorder flex flex-wrap items-center gap-[10px]">
+          <div className="flex-1 flex flex-wrap items-center ps-[20px] gap-[8px]">
             {!dummy && (
               <TagsComponent
                 name="tags"
@@ -563,7 +568,7 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
               <RepeatComponent repeat={repeater} onChange={setRepeater} />
             )}
           </div>
-          <div className="pe-[20px] flex items-center justify-end gap-[8px]">
+          <div className="ps-[20px] lg:ps-[0px] pe-[20px] flex flex-wrap items-center justify-end gap-[8px]">
             {existingData?.integration && (
               <button
                 onClick={deletePost}
@@ -596,7 +601,7 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
             )}
             {addEditSets && (
               <button
-                className="text-white text-[15px] font-[600] min-w-[180px] btnSub disabled:cursor-not-allowed disabled:opacity-80 outline-none gap-[8px] flex justify-center items-center h-[44px] rounded-[8px] bg-[#612BD3] ps-[20px] pe-[16px]"
+                className="text-white text-[15px] font-[600] min-w-[140px] sm:min-w-[180px] btnSub disabled:cursor-not-allowed disabled:opacity-80 outline-none gap-[8px] flex justify-center items-center h-[44px] rounded-[8px] bg-[#612BD3] ps-[20px] pe-[16px]"
                 disabled={
                   selectedIntegrations.length === 0 || loading || locked
                 }
@@ -612,7 +617,7 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
                     selectedIntegrations.length === 0 || loading || locked
                   }
                   onClick={schedule('schedule')}
-                  className="text-white relative min-w-[180px] btnSub disabled:cursor-not-allowed disabled:opacity-80 outline-none gap-[8px] flex justify-center items-center h-[44px] rounded-[8px] bg-[#612BD3] ps-[20px] pe-[16px]"
+                  className="text-white relative min-w-[140px] sm:min-w-[180px] btnSub disabled:cursor-not-allowed disabled:opacity-80 outline-none gap-[8px] flex justify-center items-center h-[44px] rounded-[8px] bg-[#612BD3] ps-[20px] pe-[16px]"
                 >
                   {loading && (
                     <div className="absolute left-[50%] top-[50%] -translate-y-[50%] -translate-x-[50%]">
