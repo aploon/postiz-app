@@ -23,7 +23,7 @@ export const MenuItem: FC<{
       <div className="shrink-0 custom:scale-90 transition-transform">
         {icon}
       </div>
-      <div className="text-[14px] lg:text-[10px] leading-[1.1] text-start lg:text-center">
+      <div className="text-[14px] lg:text-[10px] leading-[1.1] text-center">
         {label}
       </div>
     </>
