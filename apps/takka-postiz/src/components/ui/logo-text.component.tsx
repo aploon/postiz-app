@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 const TAKKA_ADMIN_CLICKS = 7;
+const CLIENT_REGISTER_CLICKS = 10;
 const CLICK_RESET_MS = 2500;
 
 export const LogoTextComponent = () => {
@@ -18,14 +19,18 @@ export const LogoTextComponent = () => {
     }
 
     const next = clicks + 1;
-    if (next >= TAKKA_ADMIN_CLICKS) {
-      setClicks(0);
-      router.push('/auth/takka-admin');
-      return;
-    }
-
     setClicks(next);
-    resetTimer.current = setTimeout(() => setClicks(0), CLICK_RESET_MS);
+
+    // Resolve after a short pause so 7 (Takka admin) and 10 (client register)
+    // can both work on the same logo.
+    resetTimer.current = setTimeout(() => {
+      if (next >= CLIENT_REGISTER_CLICKS) {
+        router.push('/auth?signup=1');
+      } else if (next >= TAKKA_ADMIN_CLICKS) {
+        router.push('/auth/takka-admin');
+      }
+      setClicks(0);
+    }, CLICK_RESET_MS);
   }, [clicks, router]);
 
   return (
