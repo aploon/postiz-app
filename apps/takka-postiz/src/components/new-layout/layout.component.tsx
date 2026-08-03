@@ -144,7 +144,7 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
                         <Title />
                       </div>
                     </div>
-                    <div className="flex gap-[14px] lg:gap-[20px] items-center text-textItemBlur overflow-x-auto lg:overflow-visible">
+                    <div className="flex gap-[14px] lg:gap-[20px] items-center text-textItemBlur overflow-visible">
                       <StreakComponent />
                       <div className="shrink-0 w-[1px] h-[20px] bg-blockSeparator" />
                       <OrganizationSelector />
