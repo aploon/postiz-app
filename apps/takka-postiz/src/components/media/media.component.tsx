@@ -35,6 +35,10 @@ import { useModals } from '@gitroom/takka-postiz/components/layout/new-modal';
 import { ThirdPartyMediaLibrary } from '@gitroom/takka-postiz/components/third-parties/third-party.media-library';
 import { Dashboard } from '@uppy/react';
 import {
+  ALLOWED_IMAGE_MIME_TYPES_ACCEPT,
+  ALLOWED_MIME_TYPES_ACCEPT,
+} from '@gitroom/nestjs-libraries/upload/allowed.mime.types';
+import {
   ChevronLeftIcon,
   ChevronRightIcon,
   PlusIcon,
@@ -310,10 +314,10 @@ export const MediaBox: FC<{
   const uppy = useUppyUploader({
     allowedFileTypes:
       type == 'image'
-        ? 'image/*'
+        ? ALLOWED_IMAGE_MIME_TYPES_ACCEPT
         : type == 'video'
         ? 'video/mp4'
-        : 'image/*,video/mp4',
+        : ALLOWED_MIME_TYPES_ACCEPT,
     onUploadSuccess: async (arr) => {
       await mutate();
       if (standalone) {
@@ -580,19 +584,20 @@ export const MediaBox: FC<{
               </>
             )}
             {isLoading && (
-              <>
+              <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-[6px] py-[6px]">
                 {[...new Array(16)].map((_, i) => (
                   <div
                     className={clsx(
-                      'px-[3px] py-[3px] float-left rounded-[6px] cursor-pointer w8-max aspect-square'
+                      'rounded-[6px] cursor-pointer aspect-square'
                     )}
                     key={i}
                   >
                     <div className="w-full h-full bg-newSep rounded-[6px] animate-pulse" />
                   </div>
                 ))}
-              </>
+              </div>
             )}
+       
             {data?.results
               ?.filter((f: any) => {
                 if (type === 'video') {

@@ -101,7 +101,7 @@ export async function proxy(request: NextRequest) {
           : findIndex
         ).toUpperCase()}`;
     return NextResponse.redirect(
-      new URL(`/auth${url}${additional}`, nextUrl.href)
+      new URL(`/auth/login${url}${additional}`, nextUrl.href)
     );
   }
 
@@ -129,6 +129,20 @@ export async function proxy(request: NextRequest) {
       });
       return redirect;
     }
+
+    // Client register (/auth) is hidden — default to login unless invite/oauth.
+    if (
+      nextUrl.pathname === '/auth' &&
+      !nextUrl.searchParams.get('team') &&
+      !nextUrl.searchParams.get('provider') &&
+      !nextUrl.searchParams.get('code')
+    ) {
+      // Allow register only when opened via logo easter egg (?signup=1).
+      if (nextUrl.searchParams.get('signup') !== '1') {
+        return NextResponse.redirect(new URL('/auth/login', nextUrl.href));
+      }
+    }
+
     return topResponse;
   }
   try {

@@ -20,6 +20,7 @@ interface MenuItemInterface {
 
 const ALL_CLIENT_ROLES = ['USER', 'ADMIN', 'SUPERADMIN'] as const;
 const SUPERADMIN_ONLY = ['SUPERADMIN'] as const;
+const ADMIN_AND_SUPERADMIN = ['ADMIN', 'SUPERADMIN'] as const;
 
 export const useMenuItem = () => {
   const { isGeneral } = useVariables();
@@ -179,7 +180,7 @@ export const useMenuItem = () => {
         </svg>
       ),
       path: '/media',
-      role: [...SUPERADMIN_ONLY],
+      role: [...ADMIN_AND_SUPERADMIN],
       hideForTakkaAdmin: true,
     },
   ] satisfies MenuItemInterface[] as MenuItemInterface[];
