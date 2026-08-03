@@ -13,6 +13,7 @@ import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { useToaster } from '@gitroom/react/toaster/toaster';
 import { useLaunchStore } from '@gitroom/takka-postiz/components/new-launch/store';
 import { uniqBy } from 'lodash';
+import { ALLOWED_IMAGE_MIME_TYPES } from '@gitroom/nestjs-libraries/upload/allowed.mime.types';
 
 export class CompressionWrapper<M = any, B = any> extends Compressor<any, any> {
   override async prepareUpload(fileIDs: string[]) {
@@ -73,13 +74,7 @@ export function useUppyUploader(props: {
         // Expand generic types to specific ones
         const expandedTypes = allowedTypes.flatMap((type) => {
           if (type === 'image/*') {
-            return [
-              'image/png',
-              'image/jpeg',
-              'image/jpg',
-              'image/gif',
-              'image/webp',
-            ];
+            return [...ALLOWED_IMAGE_MIME_TYPES];
           }
           if (type === 'video/*') {
             return ['video/mp4', 'video/mpeg', 'video/quicktime'];
@@ -132,17 +127,18 @@ export function useUppyUploader(props: {
             const isImage = file.type?.startsWith('image/');
             const isVideo = file.type?.startsWith('video/');
 
-            const maxImageSize = 30 * 1024 * 1024; // 30MB
+            const maxImageSize = 10 * 1024 * 1024; // 10MB (aligned with backend)
             const maxVideoSize = 1000 * 1024 * 1024; // 1GB
+            const maxDocumentSize = 25 * 1024 * 1024; // 25MB
 
             if (isImage && file.size > maxImageSize) {
               const error = new Error(
-                `Image file "${file.name}" is too large. Maximum size allowed is 30MB.`
+                `Image file "${file.name}" is too large. Maximum size allowed is 10MB.`
               );
               uppy2.log(error.message, 'error');
               uppy2.info(error.message, 'error', 5000);
               toast.show(
-                `Image file is too large. Maximum size allowed is 30MB.`
+                `Image file is too large. Maximum size allowed is 10MB.`
               );
               uppy2.removeFile(file.id); // Remove file from queue
               return reject(error);
@@ -158,6 +154,19 @@ export function useUppyUploader(props: {
                 `Video file is too large. Maximum size allowed is 1GB.`
               );
               uppy2.removeFile(file.id); // Remove file from queue
+              return reject(error);
+            }
+
+            if (!isImage && !isVideo && file.size > maxDocumentSize) {
+              const error = new Error(
+                `File "${file.name}" is too large. Maximum size allowed is 25MB.`
+              );
+              uppy2.log(error.message, 'error');
+              uppy2.info(error.message, 'error', 5000);
+              toast.show(
+                `File is too large. Maximum size allowed is 25MB.`
+              );
+              uppy2.removeFile(file.id);
               return reject(error);
             }
           }
