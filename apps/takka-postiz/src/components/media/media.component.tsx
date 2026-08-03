@@ -580,19 +580,20 @@ export const MediaBox: FC<{
               </>
             )}
             {isLoading && (
-              <>
+              <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-[6px] py-[6px]">
                 {[...new Array(16)].map((_, i) => (
                   <div
                     className={clsx(
-                      'px-[3px] py-[3px] float-left rounded-[6px] cursor-pointer w8-max aspect-square'
+                      'rounded-[6px] cursor-pointer aspect-square'
                     )}
                     key={i}
                   >
                     <div className="w-full h-full bg-newSep rounded-[6px] animate-pulse" />
                   </div>
                 ))}
-              </>
+              </div>
             )}
+       
             {data?.results
               ?.filter((f: any) => {
                 if (type === 'video') {
