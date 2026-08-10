@@ -46,6 +46,7 @@
     "docker-build": "./var/docker/docker-build.sh",
     "docker-create": "./var/docker/docker-create.sh",
     "postinstall": "pnpm run prisma-generate",
+    "puppeteer:chrome": "pnpm exec puppeteer browsers install chrome",
     "test": "jest --coverage --detectOpenHandles --reporters=default --reporters=jest-junit"
   },
   "dependencies": {
@@ -209,6 +210,7 @@
     "parse5": "^6.0.1",
     "polotno": "^3.0.0-beta.25",
     "posthog-js": "^1.178.0",
+    "puppeteer": "24.2.0",
     "react": "19.2.4",
     "react-colorful": "^5.6.1",
     "react-country-flag": "^3.1.0",

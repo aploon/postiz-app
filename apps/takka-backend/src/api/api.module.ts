@@ -29,6 +29,7 @@ import { SignatureController } from '@gitroom/takka-backend/api/routes/signature
 import { AutopostController } from '@gitroom/takka-backend/api/routes/autopost.controller';
 import { SetsController } from '@gitroom/takka-backend/api/routes/sets.controller';
 import { PostRequestsController } from '@gitroom/takka-backend/api/routes/post-requests.controller';
+import { OtherRequestsController } from '@gitroom/takka-backend/api/routes/other-requests.controller';
 import { OrganizationsController } from '@gitroom/takka-backend/api/routes/organizations.controller';
 import { DashboardController } from '@gitroom/takka-backend/api/routes/dashboard.controller';
 import { ThirdPartyController } from '@gitroom/takka-backend/api/routes/third-party.controller';
@@ -62,6 +63,7 @@ const authenticatedController = [
   AutopostController,
   SetsController,
   PostRequestsController,
+  OtherRequestsController,
   OrganizationsController,
   DashboardController,
   ThirdPartyController,

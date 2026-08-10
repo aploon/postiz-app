@@ -1,12 +1,15 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PostRequestStatus } from '@prisma/client';
+import {
+  OtherRequestPriority,
+  OtherRequestStatus,
+} from '@prisma/client';
 import { PrismaRepository } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 import {
-  CreatePostRequestDto,
-  UpdatePostRequestDto,
-} from '@gitroom/nestjs-libraries/dtos/post-requests/post-request.dto';
+  CreateOtherRequestDto,
+  UpdateOtherRequestDto,
+} from '@gitroom/nestjs-libraries/dtos/other-requests/other-request.dto';
 
-const postRequestInclude = {
+const otherRequestInclude = {
   documents: true,
   createdBy: {
     select: {
@@ -17,8 +20,8 @@ const postRequestInclude = {
   },
 } as const;
 
-const postRequestAdminInclude = {
-  ...postRequestInclude,
+const otherRequestAdminInclude = {
+  ...otherRequestInclude,
   organization: {
     select: {
       id: true,
@@ -31,45 +34,36 @@ export type ListAdminFilters = {
   page: number;
   search?: string;
   organizationId?: string;
-  status?: PostRequestStatus;
+  status?: OtherRequestStatus;
+  priority?: OtherRequestPriority;
 };
 
 @Injectable()
-export class PostRequestRepository {
+export class OtherRequestRepository {
   constructor(
-    private _postRequest: PrismaRepository<'postRequest'>,
+    private _otherRequest: PrismaRepository<'otherRequest'>,
     private _media: PrismaRepository<'media'>
   ) {}
 
   async list(
     orgId: string,
     page: number,
-    options?: { createdByUserId?: string; viewerUserId?: string }
+    options?: { createdByUserId?: string }
   ) {
     const pageSize = 10;
     const pageNum = Math.max(0, (page || 1) - 1);
-    // Restricted users only see their own requests (including drafts).
-    // Org admins see all non-drafts, plus their own drafts.
-    const where = options?.createdByUserId
-      ? {
-          organizationId: orgId,
-          createdByUserId: options.createdByUserId,
-        }
-      : {
-          organizationId: orgId,
-          OR: [
-            { status: { not: PostRequestStatus.DRAFT } },
-            ...(options?.viewerUserId
-              ? [{ createdByUserId: options.viewerUserId }]
-              : []),
-          ],
-        };
+    const where = {
+      organizationId: orgId,
+      ...(options?.createdByUserId
+        ? { createdByUserId: options.createdByUserId }
+        : {}),
+    };
 
     const [total, results] = await Promise.all([
-      this._postRequest.model.postRequest.count({ where }),
-      this._postRequest.model.postRequest.findMany({
+      this._otherRequest.model.otherRequest.count({ where }),
+      this._otherRequest.model.otherRequest.findMany({
         where,
-        include: postRequestInclude,
+        include: otherRequestInclude,
         orderBy: { createdAt: 'desc' },
         skip: pageNum * pageSize,
         take: pageSize,
@@ -88,14 +82,12 @@ export class PostRequestRepository {
     const pageNum = Math.max(0, (filters.page || 1) - 1);
     const trimmedSearch = filters.search?.trim();
 
-    // Takka admins never see drafts — only submitted requests and beyond.
     const where = {
       ...(filters.organizationId
         ? { organizationId: filters.organizationId }
         : {}),
-      ...(filters.status
-        ? { status: filters.status }
-        : { status: { not: PostRequestStatus.DRAFT } }),
+      ...(filters.status ? { status: filters.status } : {}),
+      ...(filters.priority ? { priority: filters.priority } : {}),
       ...(trimmedSearch
         ? {
             OR: [
@@ -117,10 +109,10 @@ export class PostRequestRepository {
     };
 
     const [total, results] = await Promise.all([
-      this._postRequest.model.postRequest.count({ where }),
-      this._postRequest.model.postRequest.findMany({
+      this._otherRequest.model.otherRequest.count({ where }),
+      this._otherRequest.model.otherRequest.findMany({
         where,
-        include: postRequestAdminInclude,
+        include: otherRequestAdminInclude,
         orderBy: { createdAt: 'desc' },
         skip: pageNum * pageSize,
         take: pageSize,
@@ -135,10 +127,7 @@ export class PostRequestRepository {
   }
 
   async listOrganizationsWithRequests() {
-    const rows = await this._postRequest.model.postRequest.findMany({
-      where: {
-        status: { not: PostRequestStatus.DRAFT },
-      },
+    const rows = await this._otherRequest.model.otherRequest.findMany({
       distinct: ['organizationId'],
       select: {
         organizationId: true,
@@ -160,32 +149,30 @@ export class PostRequestRepository {
   }
 
   getById(orgId: string, id: string, createdByUserId?: string) {
-    return this._postRequest.model.postRequest.findFirst({
+    return this._otherRequest.model.otherRequest.findFirst({
       where: {
         id,
         organizationId: orgId,
         ...(createdByUserId ? { createdByUserId } : {}),
       },
-      include: postRequestInclude,
+      include: otherRequestInclude,
     });
   }
 
   getByIdAdmin(id: string) {
-    return this._postRequest.model.postRequest.findUnique({
+    return this._otherRequest.model.otherRequest.findUnique({
       where: { id },
-      include: postRequestAdminInclude,
+      include: otherRequestAdminInclude,
     });
   }
 
-  async create(orgId: string, userId: string, body: CreatePostRequestDto) {
-    const created = await this._postRequest.model.postRequest.create({
+  async create(orgId: string, userId: string, body: CreateOtherRequestDto) {
+    const created = await this._otherRequest.model.otherRequest.create({
       data: {
         title: body.title,
         description: body.description,
-        publishDate: new Date(body.publishDate),
-        status: body.status === 'REQUESTED'
-          ? PostRequestStatus.REQUESTED
-          : PostRequestStatus.DRAFT,
+        priority: body.priority,
+        status: OtherRequestStatus.NEW,
         organizationId: orgId,
         createdByUserId: userId,
       },
@@ -198,14 +185,13 @@ export class PostRequestRepository {
     return this.getById(orgId, created.id);
   }
 
-  async update(orgId: string, id: string, body: UpdatePostRequestDto) {
-    await this._postRequest.model.postRequest.update({
+  async update(orgId: string, id: string, body: UpdateOtherRequestDto) {
+    await this._otherRequest.model.otherRequest.update({
       where: { id },
       data: {
         title: body.title,
         description: body.description,
-        publishDate: new Date(body.publishDate),
-        ...(body.status ? { status: body.status } : {}),
+        priority: body.priority,
       },
     });
 
@@ -218,40 +204,39 @@ export class PostRequestRepository {
 
   async delete(orgId: string, id: string) {
     await this._media.model.media.updateMany({
-      where: { postRequestId: id, organizationId: orgId },
-      data: { postRequestId: null },
+      where: { otherRequestId: id, organizationId: orgId },
+      data: { otherRequestId: null },
     });
 
-    return this._postRequest.model.postRequest.delete({
+    return this._otherRequest.model.otherRequest.delete({
       where: { id },
     });
   }
 
-  updateStatus(id: string, status: PostRequestStatus) {
-    return this._postRequest.model.postRequest.update({
+  updateStatus(id: string, status: OtherRequestStatus) {
+    return this._otherRequest.model.otherRequest.update({
       where: { id },
       data: { status },
-      include: postRequestAdminInclude,
+      include: otherRequestAdminInclude,
     });
   }
 
   async listForMonthlyReport(from: Date, to: Date) {
-    return this._postRequest.model.postRequest.findMany({
+    return this._otherRequest.model.otherRequest.findMany({
       where: {
-        status: { not: PostRequestStatus.DRAFT },
         createdAt: {
           gte: from,
           lte: to,
         },
       },
-      include: postRequestAdminInclude,
+      include: otherRequestAdminInclude,
       orderBy: [{ organizationId: 'asc' }, { createdAt: 'asc' }],
     });
   }
 
   async syncDocuments(
     orgId: string,
-    postRequestId: string,
+    otherRequestId: string,
     documentIds: string[]
   ) {
     const uniqueIds = [...new Set(documentIds)];
@@ -275,11 +260,11 @@ export class PostRequestRepository {
 
     await this._media.model.media.updateMany({
       where: {
-        postRequestId,
+        otherRequestId,
         organizationId: orgId,
         ...(uniqueIds.length ? { id: { notIn: uniqueIds } } : {}),
       },
-      data: { postRequestId: null },
+      data: { otherRequestId: null },
     });
 
     if (uniqueIds.length) {
@@ -288,7 +273,7 @@ export class PostRequestRepository {
           id: { in: uniqueIds },
           organizationId: orgId,
         },
-        data: { postRequestId },
+        data: { otherRequestId },
       });
     }
   }
