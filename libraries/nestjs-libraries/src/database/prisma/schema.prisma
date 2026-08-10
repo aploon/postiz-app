@@ -34,6 +34,7 @@ model Organization {
   post                Post[]               @relation("organization")
   submittedPost       Post[]               @relation("submittedForOrg")
   postRequests        PostRequest[]
+  otherRequests       OtherRequest[]
   sets                Sets[]
   signatures          Signatures[]
   subscription        Subscription?
@@ -112,6 +113,7 @@ model User {
   picture               Media?               @relation(fields: [pictureId], references: [id])
   organizations         UserOrganization[]
   postRequests          PostRequest[]
+  otherRequests         OtherRequest[]
   sendSuccessEmails     Boolean              @default(true)
   sendFailureEmails     Boolean              @default(true)
   sendStreakEmails      Boolean              @default(true)
@@ -226,6 +228,8 @@ model Media {
   organization       Organization        @relation(fields: [organizationId], references: [id])
   postRequestId      String?
   postRequest        PostRequest?        @relation(fields: [postRequestId], references: [id])
+  otherRequestId     String?
+  otherRequest       OtherRequest?       @relation(fields: [otherRequestId], references: [id])
   agencies           SocialMediaAgency[]
   userPicture        User[]
   oauthApps          OAuthApp[]
@@ -234,6 +238,7 @@ model Media {
   @@index([organizationId])
   @@index([type])
   @@index([postRequestId])
+  @@index([otherRequestId])
 }
 
 model SocialMediaAgency {
@@ -994,6 +999,39 @@ model PostRequest {
   @@index([createdByUserId])
   @@index([status])
   @@index([publishDate])
+}
+
+enum OtherRequestStatus {
+  NEW
+  IN_PROGRESS
+  DONE
+  CLOSED
+}
+
+enum OtherRequestPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model OtherRequest {
+  id              String               @id @default(uuid())
+  title           String
+  description     String
+  status          OtherRequestStatus   @default(NEW)
+  priority        OtherRequestPriority @default(MEDIUM)
+  organizationId  String
+  createdByUserId String
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  organization    Organization         @relation(fields: [organizationId], references: [id])
+  createdBy       User                 @relation(fields: [createdByUserId], references: [id])
+  documents       Media[]
+
+  @@index([organizationId])
+  @@index([createdByUserId])
+  @@index([status])
+  @@index([priority])
 }
 
 model Announcement {

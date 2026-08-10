@@ -10,6 +10,7 @@ interface MenuItemInterface {
   name: string;
   icon: ReactNode;
   path: string;
+  matchPaths?: string[];
   role?: string[];
   hide?: boolean;
   requireBilling?: boolean;
@@ -71,7 +72,7 @@ export const useMenuItem = () => {
       role: [...ALL_CLIENT_ROLES],
     },
     {
-      name: t('post_requests', 'Post Requests'),
+      name: t('requests', 'Requests'),
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -89,7 +90,8 @@ export const useMenuItem = () => {
           />
         </svg>
       ),
-      path: '/post-requests',
+      path: '/requests',
+      matchPaths: ['/post-requests', '/other-requests'],
       role: [...ALL_CLIENT_ROLES],
     },
     {
@@ -264,6 +266,7 @@ export const TopMenu: FC = () => {
               .map((item) => (
                 <MenuItem
                   path={item.path}
+                  matchPaths={item.matchPaths}
                   label={item.name}
                   icon={item.icon}
                   key={item.name}
@@ -278,6 +281,7 @@ export const TopMenu: FC = () => {
           .map((item) => (
             <MenuItem
               path={item.path}
+              matchPaths={item.matchPaths}
               label={item.name}
               icon={item.icon}
               key={item.name}

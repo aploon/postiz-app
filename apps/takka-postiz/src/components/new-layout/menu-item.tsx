@@ -8,10 +8,16 @@ export const MenuItem: FC<{
   label: string;
   icon: ReactNode;
   path: string;
+  matchPaths?: string[];
   onClick?: () => void;
-}> = ({ label, icon, path, onClick }) => {
+}> = ({ label, icon, path, matchPaths, onClick }) => {
   const currentPath = usePathname();
-  const isActive = currentPath.indexOf(path) === 0;
+  const isActive =
+    currentPath.indexOf(path) === 0 ||
+    (matchPaths || []).some(
+      (matchPath) =>
+        currentPath === matchPath || currentPath.startsWith(`${matchPath}/`)
+    );
 
   const className = clsx(
     'group w-full minCustom:h-[54px] custom:h-[44px] py-[8px] px-[12px] lg:px-[6px] gap-[12px] lg:gap-[4px] flex flex-row lg:flex-col font-[600] items-center justify-start lg:justify-center rounded-[12px] hover:text-textItemFocused hover:bg-boxFocused transition-colors',
