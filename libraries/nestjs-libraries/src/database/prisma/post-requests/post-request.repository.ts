@@ -235,6 +235,20 @@ export class PostRequestRepository {
     });
   }
 
+  async listForMonthlyReport(from: Date, to: Date) {
+    return this._postRequest.model.postRequest.findMany({
+      where: {
+        status: { not: PostRequestStatus.DRAFT },
+        createdAt: {
+          gte: from,
+          lte: to,
+        },
+      },
+      include: postRequestAdminInclude,
+      orderBy: [{ organizationId: 'asc' }, { createdAt: 'asc' }],
+    });
+  }
+
   async syncDocuments(
     orgId: string,
     postRequestId: string,

@@ -221,6 +221,19 @@ export class OtherRequestRepository {
     });
   }
 
+  async listForMonthlyReport(from: Date, to: Date) {
+    return this._otherRequest.model.otherRequest.findMany({
+      where: {
+        createdAt: {
+          gte: from,
+          lte: to,
+        },
+      },
+      include: otherRequestAdminInclude,
+      orderBy: [{ organizationId: 'asc' }, { createdAt: 'asc' }],
+    });
+  }
+
   async syncDocuments(
     orgId: string,
     otherRequestId: string,
