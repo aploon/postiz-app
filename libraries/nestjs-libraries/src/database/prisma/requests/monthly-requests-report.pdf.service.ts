@@ -290,7 +290,7 @@ export class MonthlyRequestsReportPdfService {
         </tbody>
       </table>
 
-      <div class="signatures">
+      <!-- <div class="signatures">
         <div class="signature">
           <div class="sign-name">Bruno BIAOU</div>
           <div class="sign-role">Project Manager</div>
@@ -299,7 +299,7 @@ export class MonthlyRequestsReportPdfService {
           <div class="sign-name">Bruno BIAOU</div>
           <div class="sign-role">Technical Manager</div>
         </div>
-      </div>
+      </div> -->
     </div>
 
     <div class="footer-block">
