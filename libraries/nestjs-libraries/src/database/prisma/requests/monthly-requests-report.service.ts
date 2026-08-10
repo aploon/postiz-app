@@ -9,6 +9,7 @@ import { OtherRequestRepository } from '@gitroom/nestjs-libraries/database/prism
 import { OrganizationRepository } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.repository';
 import { UsersService } from '@gitroom/nestjs-libraries/database/prisma/users/users.service';
 import { NotificationService } from '@gitroom/nestjs-libraries/database/prisma/notifications/notification.service';
+import { MonthlyRequestsReportPdfService } from '@gitroom/nestjs-libraries/database/prisma/requests/monthly-requests-report.pdf.service';
 
 type ReportRow = {
   title: string;
@@ -31,7 +32,8 @@ export class MonthlyRequestsReportService {
     private _otherRequestRepository: OtherRequestRepository,
     private _organizationRepository: OrganizationRepository,
     private _usersService: UsersService,
-    private _notificationService: NotificationService
+    private _notificationService: NotificationService,
+    private _monthlyRequestsReportPdfService: MonthlyRequestsReportPdfService
   ) {}
 
   /**
@@ -140,11 +142,24 @@ export class MonthlyRequestsReportService {
         (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
       );
 
+      const reference = `RR-${from.getUTCFullYear()}${String(
+        from.getUTCMonth() + 1
+      ).padStart(2, '0')}-${report.organizationId.slice(0, 8).toUpperCase()}`;
+
+      const { url: pdfUrl } =
+        await this._monthlyRequestsReportPdfService.generateAndUpload({
+          organizationName: report.organizationName,
+          periodLabel,
+          rows: report.rows,
+          reference,
+        });
+
       const subject = `Monthly requests report — ${report.organizationName} — ${periodLabel}`;
       const html = this.buildEmailHtml({
         organizationName: report.organizationName,
         periodLabel,
-        rows: report.rows,
+        rowsCount: report.rows.length,
+        pdfUrl,
         frontendUrl,
         internal: false,
       });
@@ -180,7 +195,8 @@ export class MonthlyRequestsReportService {
         const internalHtml = this.buildEmailHtml({
           organizationName: report.organizationName,
           periodLabel,
-          rows: report.rows,
+          rowsCount: report.rows.length,
+          pdfUrl,
           frontendUrl,
           internal: true,
         });
@@ -300,52 +316,19 @@ export class MonthlyRequestsReportService {
   private buildEmailHtml({
     organizationName,
     periodLabel,
-    rows,
+    rowsCount,
+    pdfUrl,
     frontendUrl,
     internal,
   }: {
     organizationName: string;
     periodLabel: string;
-    rows: ReportRow[];
+    rowsCount: number;
+    pdfUrl: string;
     frontendUrl: string;
     internal: boolean;
   }) {
-    const sentOn = new Date().toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      timeZone: 'UTC',
-    });
-
-    const tableRows = rows
-      .map(
-        (row, index) => `
-      <tr>
-        <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;">${
-          index + 1
-        }</td>
-        <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;">${this.escape(
-          row.title
-        )}</td>
-        <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;">${this.escape(
-          row.type
-        )}</td>
-        <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;">${this.escape(
-          row.status
-        )}</td>
-        <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;">${this.escape(
-          row.priority || '—'
-        )}</td>
-        <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;">${this.formatDate(
-          row.createdAt
-        )}</td>
-      </tr>`
-      )
-      .join('');
-
     const requestsUrl = frontendUrl ? `${frontendUrl}/requests` : '#';
-    const postCount = rows.filter((r) => r.type === 'Post request').length;
-    const otherCount = rows.filter((r) => r.type === 'Other request').length;
 
     return `
 <div style="font-family:Arial,Helvetica,sans-serif;color:#111827;line-height:1.5;">
@@ -354,73 +337,25 @@ export class MonthlyRequestsReportService {
       ? `<p style="margin:0 0 16px;padding:8px 12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;font-size:13px;"><strong>Internal copy</strong> for Takka admins</p>`
       : ''
   }
-  <h1 style="margin:0 0 4px;font-size:22px;">Monthly requests report</h1>
-  <p style="margin:0 0 20px;color:#6b7280;font-size:14px;">Delivery note style recap</p>
-
-  <table style="width:100%;margin-bottom:20px;font-size:14px;">
-    <tr>
-      <td style="padding:4px 0;"><strong>Project</strong></td>
-      <td style="padding:4px 0;">${this.escape(organizationName)}</td>
-    </tr>
-    <tr>
-      <td style="padding:4px 0;"><strong>Period</strong></td>
-      <td style="padding:4px 0;">${this.escape(periodLabel)} (UTC)</td>
-    </tr>
-    <tr>
-      <td style="padding:4px 0;"><strong>Sent on</strong></td>
-      <td style="padding:4px 0;">${sentOn} (UTC)</td>
-    </tr>
-  </table>
-
-  <table style="width:100%;margin-bottom:24px;font-size:13px;">
-    <tr>
-      <td style="vertical-align:top;width:50%;padding-right:12px;">
-        <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#6b7280;margin-bottom:6px;">From</div>
-        <div><strong>Takka Technologies</strong></div>
-        <div style="color:#6b7280;">Platform monthly recap</div>
-      </td>
-      <td style="vertical-align:top;width:50%;padding-left:12px;">
-        <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#6b7280;margin-bottom:6px;">To</div>
-        <div><strong>${this.escape(organizationName)}</strong></div>
-        <div style="color:#6b7280;">Organization admins</div>
-      </td>
-    </tr>
-  </table>
-
-  <p style="margin:0 0 8px;font-size:13px;color:#6b7280;">
-    ${rows.length} request${rows.length === 1 ? '' : 's'}
-    (${postCount} post, ${otherCount} other)
+  <h1 style="margin:0 0 8px;font-size:20px;">Monthly requests report</h1>
+  <p style="margin:0 0 16px;font-size:14px;color:#374151;">
+    Your Takkatech requests report for <strong>${this.escape(
+      organizationName
+    )}</strong>
+    (<strong>${this.escape(periodLabel)}</strong>, UTC) is ready.
   </p>
-
-  <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
-    <thead>
-      <tr style="background:#f9fafb;text-align:left;">
-        <th style="padding:10px 12px;font-size:11px;text-transform:uppercase;color:#6b7280;">#</th>
-        <th style="padding:10px 12px;font-size:11px;text-transform:uppercase;color:#6b7280;">Title</th>
-        <th style="padding:10px 12px;font-size:11px;text-transform:uppercase;color:#6b7280;">Type</th>
-        <th style="padding:10px 12px;font-size:11px;text-transform:uppercase;color:#6b7280;">Status</th>
-        <th style="padding:10px 12px;font-size:11px;text-transform:uppercase;color:#6b7280;">Priority</th>
-        <th style="padding:10px 12px;font-size:11px;text-transform:uppercase;color:#6b7280;">Created</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${tableRows}
-    </tbody>
-  </table>
-
-  <p style="margin:20px 0 0;font-size:14px;">
+  <p style="margin:0 0 16px;font-size:14px;color:#6b7280;">
+    ${rowsCount} request${rowsCount === 1 ? '' : 's'} included.
+  </p>
+  <p style="margin:0 0 20px;">
+    <a href="${pdfUrl}" style="display:inline-block;padding:10px 16px;background:#111827;color:#ffffff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600;">
+      Download PDF report
+    </a>
+  </p>
+  <p style="margin:0;font-size:13px;">
     <a href="${requestsUrl}" style="color:#4f46e5;">Open requests in Takka</a>
   </p>
 </div>`;
-  }
-
-  private formatDate(date: Date) {
-    return date.toLocaleString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      timeZone: 'UTC',
-    });
   }
 
   private escape(value: string) {
