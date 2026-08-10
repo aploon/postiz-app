@@ -158,7 +158,7 @@ export class MonthlyRequestsReportService {
       const html = this.buildEmailHtml({
         organizationName: report.organizationName,
         periodLabel,
-        rowsCount: report.rows.length,
+        rows: report.rows,
         pdfUrl,
         frontendUrl,
         internal: false,
@@ -195,7 +195,7 @@ export class MonthlyRequestsReportService {
         const internalHtml = this.buildEmailHtml({
           organizationName: report.organizationName,
           periodLabel,
-          rowsCount: report.rows.length,
+          rows: report.rows,
           pdfUrl,
           frontendUrl,
           internal: true,
@@ -316,19 +316,48 @@ export class MonthlyRequestsReportService {
   private buildEmailHtml({
     organizationName,
     periodLabel,
-    rowsCount,
+    rows,
     pdfUrl,
     frontendUrl,
     internal,
   }: {
     organizationName: string;
     periodLabel: string;
-    rowsCount: number;
+    rows: ReportRow[];
     pdfUrl: string;
     frontendUrl: string;
     internal: boolean;
   }) {
     const requestsUrl = frontendUrl ? `${frontendUrl}/requests` : '#';
+    const previewLimit = 5;
+    const previewRows = rows.slice(0, previewLimit);
+    const hasMore = rows.length > previewLimit;
+
+    const tableRows = previewRows
+      .map(
+        (row, index) => `
+      <tr>
+        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px;">${
+          index + 1
+        }</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px;">${this.escape(
+          row.title
+        )}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px;">${this.escape(
+          row.type
+        )}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px;">${this.escape(
+          row.status
+        )}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px;">${this.escape(
+          row.priority || '—'
+        )}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px;">${this.formatDate(
+          row.createdAt
+        )}</td>
+      </tr>`
+      )
+      .join('');
 
     return `
 <div style="font-family:Arial,Helvetica,sans-serif;color:#111827;line-height:1.5;">
@@ -344,9 +373,31 @@ export class MonthlyRequestsReportService {
     )}</strong>
     (<strong>${this.escape(periodLabel)}</strong>, UTC) is ready.
   </p>
-  <p style="margin:0 0 16px;font-size:14px;color:#6b7280;">
-    ${rowsCount} request${rowsCount === 1 ? '' : 's'} included.
+  <p style="margin:0 0 12px;font-size:14px;color:#6b7280;">
+    ${rows.length} request${rows.length === 1 ? '' : 's'} included.
   </p>
+
+  <table style="width:100%;border-collapse:collapse;margin:0 0 8px;">
+    <thead>
+      <tr style="background:#f9fafb;text-align:left;">
+        <th style="padding:8px 10px;font-size:11px;text-transform:uppercase;color:#6b7280;">#</th>
+        <th style="padding:8px 10px;font-size:11px;text-transform:uppercase;color:#6b7280;">Title</th>
+        <th style="padding:8px 10px;font-size:11px;text-transform:uppercase;color:#6b7280;">Type</th>
+        <th style="padding:8px 10px;font-size:11px;text-transform:uppercase;color:#6b7280;">Status</th>
+        <th style="padding:8px 10px;font-size:11px;text-transform:uppercase;color:#6b7280;">Priority</th>
+        <th style="padding:8px 10px;font-size:11px;text-transform:uppercase;color:#6b7280;">Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${tableRows}
+    </tbody>
+  </table>
+  ${
+    hasMore
+      ? `<p style="margin:0 0 16px;font-size:13px;color:#6b7280;">more...</p>`
+      : `<div style="margin-bottom:16px;"></div>`
+  }
+
   <p style="margin:0 0 20px;">
     <a href="${pdfUrl}" style="display:inline-block;padding:10px 16px;background:#111827;color:#ffffff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600;">
       Download PDF report
@@ -356,6 +407,15 @@ export class MonthlyRequestsReportService {
     <a href="${requestsUrl}" style="color:#4f46e5;">Open requests in Takka</a>
   </p>
 </div>`;
+  }
+
+  private formatDate(date: Date) {
+    return date.toLocaleString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      timeZone: 'UTC',
+    });
   }
 
   private escape(value: string) {
