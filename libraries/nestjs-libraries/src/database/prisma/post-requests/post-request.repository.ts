@@ -254,7 +254,7 @@ export class PostRequestRepository {
     });
   }
 
-  async listForMonthlyReport(from: Date, to: Date) {
+  async listForMonthlyReport(from: Date, to: Date, organizationId?: string) {
     return this._postRequest.model.postRequest.findMany({
       where: {
         status: { not: PostRequestStatus.DRAFT },
@@ -262,6 +262,7 @@ export class PostRequestRepository {
           gte: from,
           lte: to,
         },
+        ...(organizationId ? { organizationId } : {}),
       },
       include: postRequestAdminInclude,
       orderBy: [{ organizationId: 'asc' }, { createdAt: 'asc' }],

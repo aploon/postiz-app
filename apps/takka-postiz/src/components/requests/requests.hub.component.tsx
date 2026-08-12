@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
+import useSWR from 'swr';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { useUser } from '@gitroom/takka-postiz/components/layout/user.context';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
@@ -23,6 +24,26 @@ const previousMonthDefaults = () => {
   };
 };
 
+const useReportOrganizations = () => {
+  const fetch = useFetch();
+  const load = useCallback(async () => {
+    return (await fetch('/settings/team/organizations')).json();
+  }, [fetch]);
+
+  return useSWR<{ id: string; name: string }[]>(
+    'monthly-report-organizations',
+    load,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      revalidateIfStale: false,
+      revalidateOnMount: true,
+      refreshWhenHidden: false,
+      refreshWhenOffline: false,
+    }
+  );
+};
+
 const SendMonthlyReportModal = () => {
   const t = useT();
   const fetch = useFetch();
@@ -31,9 +52,26 @@ const SendMonthlyReportModal = () => {
   const defaults = useMemo(() => previousMonthDefaults(), []);
   const [from, setFrom] = useState(defaults.from);
   const [to, setTo] = useState(defaults.to);
+  const [organizationId, setOrganizationId] = useState('');
   const [sending, setSending] = useState(false);
+  const { data: organizationsData, isLoading: loadingOrgs } =
+    useReportOrganizations();
+  const organizations = Array.isArray(organizationsData)
+    ? organizationsData
+    : [];
 
   const submit = useCallback(async () => {
+    if (!organizationId) {
+      toaster.show(
+        t(
+          'monthly_requests_report_select_organization',
+          'Please select an organization'
+        ),
+        'warning'
+      );
+      return;
+    }
+
     if (!from || !to) {
       toaster.show(
         t('monthly_requests_report_invalid_dates', 'Please choose a valid date range'),
@@ -57,7 +95,7 @@ const SendMonthlyReportModal = () => {
     try {
       const response = await fetch('/admin/monthly-requests-report/send', {
         method: 'POST',
-        body: JSON.stringify({ from, to }),
+        body: JSON.stringify({ from, to, organizationId }),
       });
       const result = await response.json().catch(() => null);
 
@@ -134,16 +172,38 @@ const SendMonthlyReportModal = () => {
     } finally {
       setSending(false);
     }
-  }, [fetch, from, modal, t, to, toaster]);
+  }, [fetch, from, modal, organizationId, t, to, toaster]);
 
   return (
     <div className="flex flex-col gap-[16px] p-[16px] pt-0 max-w-[420px]">
       <p className="text-[14px] text-newTableText">
         {t(
           'monthly_requests_report_modal_description',
-          'Choose the period (UTC). Organization admins and Takka admins will receive the report.'
+          'Choose the organization and period (UTC). Organization admins and Takka admins will receive the report.'
         )}
       </p>
+      <div className="flex flex-col gap-[6px]">
+        <label className="text-[12px] text-newTableText">
+          {t('organization', 'Organization')}
+        </label>
+        <select
+          value={organizationId}
+          onChange={(e) => setOrganizationId(e.target.value)}
+          disabled={loadingOrgs}
+          className="bg-newBgColorInner h-[38px] border border-newTableBorder rounded-[8px] px-[10px] text-[14px] text-textColor outline-none"
+        >
+          <option value="">
+            {loadingOrgs
+              ? t('loading', 'Loading...')
+              : t('select_organization', 'Select an organization')}
+          </option>
+          {organizations.map((org) => (
+            <option key={org.id} value={org.id}>
+              {org.name}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="flex flex-col gap-[6px]">
         <label className="text-[12px] text-newTableText">
           {t('start_date', 'Start date')}
@@ -173,7 +233,7 @@ const SendMonthlyReportModal = () => {
         <Button
           type="button"
           loading={sending}
-          disabled={sending}
+          disabled={sending || !organizationId}
           onClick={submit}
         >
           {t('send_report', 'Send report')}

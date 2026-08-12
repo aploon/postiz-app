@@ -44,7 +44,8 @@ export class AdminController {
     this.assertTakkaAdmin(user);
     return this._monthlyRequestsReportService.sendReportsForCustomRange(
       body.from,
-      body.to
+      body.to,
+      body.organizationId
     );
   }
 

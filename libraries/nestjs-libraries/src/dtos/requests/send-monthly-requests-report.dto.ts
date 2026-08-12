@@ -1,4 +1,4 @@
-import { IsDefined, IsString, Matches } from 'class-validator';
+import { IsDefined, IsOptional, IsString, Matches } from 'class-validator';
 
 export class SendMonthlyRequestsReportDto {
   @IsString()
@@ -10,4 +10,8 @@ export class SendMonthlyRequestsReportDto {
   @IsDefined()
   @Matches(/^\d{4}-\d{2}-\d{2}$/)
   to: string;
+
+  @IsOptional()
+  @IsString()
+  organizationId?: string;
 }

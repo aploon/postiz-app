@@ -15,6 +15,7 @@ type ReportRow = {
   title: string;
   type: 'Post request' | 'Other request';
   status: string;
+  category?: string;
   priority?: string;
   createdAt: Date;
 };
@@ -55,7 +56,11 @@ export class MonthlyRequestsReportService {
   }
 
   /** Manual trigger for Takka admins with a custom UTC date range. */
-  async sendReportsForCustomRange(fromInput: string, toInput: string) {
+  async sendReportsForCustomRange(
+    fromInput: string,
+    toInput: string,
+    organizationId?: string
+  ) {
     if (!this._notificationService.hasEmailProvider()) {
       return { skipped: true, reason: 'no-email-provider' as const, sent: 0 };
     }
@@ -72,7 +77,7 @@ export class MonthlyRequestsReportService {
     }
 
     const periodLabel = this.formatPeriodLabel(from, to);
-    return this.sendReportsForRange(from, to, periodLabel);
+    return this.sendReportsForRange(from, to, periodLabel, organizationId);
   }
 
   /** @deprecated Prefer sendReportsForCustomRange — kept for callers expecting previous month. */
@@ -84,10 +89,23 @@ export class MonthlyRequestsReportService {
     );
   }
 
-  async sendReportsForRange(from: Date, to: Date, periodLabel: string) {
+  async sendReportsForRange(
+    from: Date,
+    to: Date,
+    periodLabel: string,
+    organizationId?: string
+  ) {
     const [postRequests, otherRequests, takkaAdmins] = await Promise.all([
-      this._postRequestRepository.listForMonthlyReport(from, to),
-      this._otherRequestRepository.listForMonthlyReport(from, to),
+      this._postRequestRepository.listForMonthlyReport(
+        from,
+        to,
+        organizationId
+      ),
+      this._otherRequestRepository.listForMonthlyReport(
+        from,
+        to,
+        organizationId
+      ),
       this._usersService.findTakkaAdmins(),
     ]);
 
@@ -103,6 +121,7 @@ export class MonthlyRequestsReportService {
         title: item.title,
         type: 'Post request',
         status: this.postStatusLabel(item.status),
+        category: item.category?.name || undefined,
         createdAt: item.createdAt,
       });
     }
@@ -347,6 +366,9 @@ export class MonthlyRequestsReportService {
           row.type
         )}</td>
         <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px;">${this.escape(
+          row.category || '—'
+        )}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px;">${this.escape(
           row.status
         )}</td>
         <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px;">${this.escape(
@@ -383,6 +405,7 @@ export class MonthlyRequestsReportService {
         <th style="padding:8px 10px;font-size:11px;text-transform:uppercase;color:#6b7280;">#</th>
         <th style="padding:8px 10px;font-size:11px;text-transform:uppercase;color:#6b7280;">Title</th>
         <th style="padding:8px 10px;font-size:11px;text-transform:uppercase;color:#6b7280;">Type</th>
+        <th style="padding:8px 10px;font-size:11px;text-transform:uppercase;color:#6b7280;">Category</th>
         <th style="padding:8px 10px;font-size:11px;text-transform:uppercase;color:#6b7280;">Status</th>
         <th style="padding:8px 10px;font-size:11px;text-transform:uppercase;color:#6b7280;">Priority</th>
         <th style="padding:8px 10px;font-size:11px;text-transform:uppercase;color:#6b7280;">Created</th>
