@@ -498,14 +498,14 @@ const PostRequestView = ({ data }: { data: PostRequestItem }) => {
         </div>
       </div>
 
-      {data.category?.name && (
-        <div className="border border-newTableBorder rounded-[8px] bg-newTableHeader p-[16px]">
-          <div className="text-[12px] uppercase tracking-wide text-newTableText mb-[8px]">
-            {t('category', 'Category')}
-          </div>
-          <div className="text-[14px]">{data.category.name}</div>
+      <div className="border border-newTableBorder rounded-[8px] bg-newTableHeader p-[16px]">
+        <div className="text-[12px] uppercase tracking-wide text-newTableText mb-[8px]">
+          {t('category', 'Category')}
         </div>
-      )}
+        <div className="text-[14px]">
+          {data.category?.name || t('no_category', 'No category')}
+        </div>
+      </div>
 
       {data.link && (
         <div className="border border-newTableBorder rounded-[8px] bg-newTableHeader p-[16px]">
