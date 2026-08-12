@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { GetOrgFromRequest } from '@gitroom/nestjs-libraries/user/org.from.request';
-import { Organization } from '@prisma/client';
+import { GetUserFromRequest } from '@gitroom/nestjs-libraries/user/user.from.request';
+import { Organization, User } from '@prisma/client';
 import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
 import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
 import { AddTeamMemberDto } from '@gitroom/nestjs-libraries/dtos/settings/add.team.member.dto';
@@ -24,6 +25,15 @@ export class SettingsController {
     return this._organizationService.getTeam(org.id);
   }
 
+  @Get('/team/organizations')
+  @CheckPolicies(
+    [AuthorizationActions.Create, Sections.TEAM_MEMBERS],
+    [AuthorizationActions.Create, Sections.ADMIN]
+  )
+  listTeamInviteOrganizations(@GetUserFromRequest() user: User) {
+    return this._organizationService.listAllForTakkaAdminInvite(user);
+  }
+
   @Post('/team')
   @CheckPolicies(
     [AuthorizationActions.Create, Sections.TEAM_MEMBERS],
@@ -31,9 +41,21 @@ export class SettingsController {
   )
   async inviteTeamMember(
     @GetOrgFromRequest() org: Organization,
+    @GetUserFromRequest() user: User,
     @Body() body: AddTeamMemberDto
   ) {
-    return this._organizationService.inviteTeamMember(org.id, body);
+    // @ts-ignore
+    const inviterRole = (org.users?.[0]?.role || 'USER') as
+      | 'USER'
+      | 'ADMIN'
+      | 'SUPERADMIN';
+
+    return this._organizationService.inviteTeamMember(
+      org.id,
+      body,
+      user,
+      inviterRole
+    );
   }
 
   @Delete('/team/:id')

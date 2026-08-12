@@ -3,7 +3,7 @@
 import { Button } from '@gitroom/react/form/button';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import useSWR from 'swr';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useUser } from '@gitroom/takka-postiz/components/layout/user.context';
 import { capitalize } from 'lodash';
 import { useModals } from '@gitroom/takka-postiz/components/layout/new-modal';
@@ -18,24 +18,46 @@ import { deleteDialog } from '@gitroom/react/helpers/takka-postiz/delete.dialog'
 import copy from 'copy-to-clipboard';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 
-const roles = [
-  {
-    name: 'User',
-    value: 'USER',
-  },
-  {
-    name: 'Admin',
-    value: 'ADMIN',
-  },
-];
+const TAKKATECH_ORG_NAME = 'Takkatech';
+const NEW_ORG_VALUE = 'new';
+
+const useTeamInviteOrganizations = (enabled: boolean) => {
+  const fetch = useFetch();
+  const load = useCallback(async () => {
+    return (await fetch('/settings/team/organizations')).json() as Promise<
+      Array<{ id: string; name: string }>
+    >;
+  }, [fetch]);
+
+  return useSWR<Array<{ id: string; name: string }>>(
+    enabled ? 'team-invite-organizations' : null,
+    load,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      revalidateIfStale: false,
+      revalidateOnMount: true,
+      refreshWhenHidden: false,
+      refreshWhenOffline: false,
+    }
+  );
+};
+
 export const AddMember = ({
-  showMakeTakkaAdmin,
+  isTakkaAdmin,
+  inviterRole,
+  currentOrgId,
+  organizations,
 }: {
-  showMakeTakkaAdmin: boolean;
+  isTakkaAdmin: boolean;
+  inviterRole: 'USER' | 'ADMIN' | 'SUPERADMIN';
+  currentOrgId: string;
+  organizations: Array<{ id: string; name: string }>;
 }) => {
   const modals = useModals();
   const fetch = useFetch();
   const toast = useToaster();
+  const t = useT();
   const resolver = useMemo(() => {
     return classValidatorResolver(AddTeamMemberDto);
   }, []);
@@ -45,6 +67,8 @@ export const AddMember = ({
       role: '',
       sendEmail: true,
       makeTakkaAdmin: false,
+      organizationId: currentOrgId,
+      organizationName: '',
     },
     resolver,
     mode: 'onChange',
@@ -53,19 +77,88 @@ export const AddMember = ({
     control: form.control,
     name: 'sendEmail',
   });
+  const organizationId = useWatch({
+    control: form.control,
+    name: 'organizationId',
+  });
+  const makeTakkaAdmin = useWatch({
+    control: form.control,
+    name: 'makeTakkaAdmin',
+  });
+
+  const roleOptions = useMemo(() => {
+    const options = [
+      { name: t('user', 'User'), value: 'USER' },
+      { name: t('admin', 'Admin'), value: 'ADMIN' },
+    ];
+
+    if (inviterRole === 'SUPERADMIN' || isTakkaAdmin) {
+      options.push({
+        name: t('super_admin', 'Super Admin'),
+        value: 'SUPERADMIN',
+      });
+    }
+
+    return options;
+  }, [inviterRole, isTakkaAdmin, t]);
+
+  const selectedOrganization = useMemo(() => {
+    if (!isTakkaAdmin || organizationId === NEW_ORG_VALUE) {
+      return null;
+    }
+
+    return organizations.find((org) => org.id === organizationId);
+  }, [isTakkaAdmin, organizationId, organizations]);
+
+  const showMakeTakkaAdmin =
+    isTakkaAdmin &&
+    organizationId !== NEW_ORG_VALUE &&
+    selectedOrganization?.name === TAKKATECH_ORG_NAME;
+
+  useEffect(() => {
+    if (makeTakkaAdmin) {
+      form.setValue('role', 'ADMIN');
+    }
+  }, [form, makeTakkaAdmin]);
+
   const submit = useCallback(
     async (values: {
       email: string;
       role: string;
       sendEmail: boolean;
       makeTakkaAdmin: boolean;
+      organizationId?: string;
+      organizationName?: string;
     }) => {
-      const { url } = await (
-        await fetch('/settings/team', {
-          method: 'POST',
-          body: JSON.stringify(values),
-        })
-      ).json();
+      const payload: Record<string, unknown> = {
+        email: values.email,
+        role: values.role,
+        sendEmail: values.sendEmail,
+      };
+
+      if (values.makeTakkaAdmin) {
+        payload.makeTakkaAdmin = true;
+      }
+
+      if (isTakkaAdmin && values.organizationId) {
+        payload.organizationId = values.organizationId;
+        if (values.organizationId === NEW_ORG_VALUE && values.organizationName) {
+          payload.organizationName = values.organizationName;
+        }
+      }
+
+      const response = await fetch('/settings/team', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        toast.show(message || t('invitation_failed', 'Invitation failed'), 'warning');
+        return;
+      }
+
+      const { url } = await response.json();
       if (values.sendEmail) {
         modals.closeAll();
         toast.show(t('invitation_link_sent', 'Invitation link sent'));
@@ -75,15 +168,39 @@ export const AddMember = ({
       modals.closeAll();
       toast.show(t('link_copied_to_clipboard', 'Link copied to clipboard'));
     },
-    []
+    [fetch, isTakkaAdmin, modals, t, toast]
   );
-
-  const t = useT();
 
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(submit)}>
         <div className="relative flex gap-[10px] flex-col flex-1 p-[16px] pt-0">
+          {isTakkaAdmin && (
+            <>
+              <Select
+                label={t('organization', 'Organization')}
+                name="organizationId"
+              >
+                <option value="">{t('select_organization', 'Select organization')}</option>
+                <option value={NEW_ORG_VALUE}>
+                  {t('new_organization', 'New organization')}
+                </option>
+                {organizations.map((org) => (
+                  <option key={org.id} value={org.id}>
+                    {org.name}
+                  </option>
+                ))}
+              </Select>
+              {organizationId === NEW_ORG_VALUE && (
+                <Input
+                  label={t('organization_name', 'Organization name')}
+                  placeholder={t('enter_organization_name', 'Enter organization name')}
+                  name="organizationName"
+                />
+              )}
+            </>
+          )}
+
           {sendEmail && (
             <Input
               label="Email"
@@ -91,14 +208,17 @@ export const AddMember = ({
               name="email"
             />
           )}
-          <Select label="Role" name="role">
-            <option value="">{t('select_role', 'Select Role')}</option>
-            {roles.map((role) => (
-              <option key={role.value} value={role.value}>
-                {role.name}
-              </option>
-            ))}
-          </Select>
+
+          {!makeTakkaAdmin && (
+            <Select label="Role" name="role">
+              <option value="">{t('select_role', 'Select Role')}</option>
+              {roleOptions.map((role) => (
+                <option key={role.value} value={role.value}>
+                  {role.name}
+                </option>
+              ))}
+            </Select>
+          )}
 
           {showMakeTakkaAdmin && (
             <div className="flex gap-[5px] items-center">
@@ -123,11 +243,15 @@ export const AddMember = ({
     </FormProvider>
   );
 };
+
 export const TeamsComponent = () => {
   const fetch = useFetch();
   const user = useUser();
   const modals = useModals();
   const t = useT();
+  const isTakkaAdmin = user?.isTakkaAdmin === true;
+  const inviterRole = user?.role || 'USER';
+  const { data: organizations = [] } = useTeamInviteOrganizations(isTakkaAdmin);
   const myLevel = user?.role === 'USER' ? 0 : user?.role === 'ADMIN' ? 1 : 2;
   const getLevel = useCallback(
     (role: 'USER' | 'ADMIN' | 'SUPERADMIN') =>
@@ -143,24 +267,7 @@ export const TeamsComponent = () => {
         id: string;
       };
     }>;
-  }, []);
-
-  const loadPersonalInfo = useCallback(async () => {
-    return (await (await fetch('/user/personal')).json()) as {
-      organization?: { id: string; name: string } | null;
-    };
   }, [fetch]);
-
-  const { data: personalInfo } = useSWR('/user/personal', loadPersonalInfo, {
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-    revalidateIfStale: false,
-    revalidateOnMount: true,
-    refreshWhenHidden: false,
-    refreshWhenOffline: false,
-  });
-
-  const showMakeTakkaAdmin = personalInfo?.organization?.name === 'Takkatech';
 
   const addMemberWithOrg = useCallback(() => {
     modals.openModal({
@@ -169,9 +276,16 @@ export const TeamsComponent = () => {
       },
       title: t('top_title_add_member', 'Add Member'),
       withCloseButton: true,
-      children: <AddMember showMakeTakkaAdmin={!!showMakeTakkaAdmin} />,
+      children: (
+        <AddMember
+          isTakkaAdmin={isTakkaAdmin}
+          inviterRole={inviterRole}
+          currentOrgId={user?.orgId || ''}
+          organizations={organizations}
+        />
+      ),
     });
-  }, [modals, showMakeTakkaAdmin, t]);
+  }, [inviterRole, isTakkaAdmin, modals, organizations, t, user?.orgId]);
   const { data, mutate } = useSWR('/api/teams', loadTeam, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
@@ -196,7 +310,7 @@ export const TeamsComponent = () => {
         });
         await mutate();
       },
-    [t]
+    [fetch, mutate, t]
   );
 
   return (

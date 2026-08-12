@@ -294,11 +294,38 @@ export class OrganizationRepository {
     });
   }
 
+  createOrganizationOnly(name: string) {
+    return this._organization.model.organization.create({
+      data: {
+        name,
+        apiKey: AuthService.fixedEncryption(makeId(20)),
+        allowTrial: true,
+        isTrailing: true,
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+  }
+
+  listAllForInvite() {
+    return this._organization.model.organization.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+  }
+
   async addUserToOrg(
     userId: string,
     id: string,
     orgId: string,
-    role: 'USER' | 'ADMIN'
+    role: 'USER' | 'ADMIN' | 'SUPERADMIN'
   ) {
     const checkIfInviteExists = await this._user.model.user.findFirst({
       where: {

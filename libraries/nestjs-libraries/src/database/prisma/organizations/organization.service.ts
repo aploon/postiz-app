@@ -61,7 +61,7 @@ export class OrganizationService {
     userId: string,
     id: string,
     orgId: string,
-    role: 'USER' | 'ADMIN'
+    role: 'USER' | 'ADMIN' | 'SUPERADMIN'
   ) {
     return this._organizationRepository.addUserToOrg(userId, id, orgId, role);
   }
@@ -102,12 +102,72 @@ export class OrganizationService {
     return this._organizationRepository.getOrgByCustomerId(customerId);
   }
 
-  async inviteTeamMember(orgId: string, body: AddTeamMemberDto) {
+  listAllForTakkaAdminInvite(user: User) {
+    if (!user?.isTakkaAdmin) {
+      throw new ForbiddenException('Unauthorized');
+    }
+
+    return this._organizationRepository.listAllForInvite();
+  }
+
+  async inviteTeamMember(
+    currentOrgId: string,
+    body: AddTeamMemberDto,
+    user: User,
+    inviterRole: 'USER' | 'ADMIN' | 'SUPERADMIN'
+  ) {
+    let orgId = currentOrgId;
+
+    if (body.organizationId) {
+      if (!user?.isTakkaAdmin) {
+        throw new ForbiddenException('Unauthorized');
+      }
+
+      if (body.organizationId === 'new') {
+        const name = body.organizationName?.trim();
+        if (!name || name.length < 3) {
+          throw new Error('Organization name is required');
+        }
+
+        const created = await this._organizationRepository.createOrganizationOnly(
+          name
+        );
+        orgId = created.id;
+      } else {
+        const target = await this.getOrgById(body.organizationId);
+        if (!target) {
+          throw new Error('Organization not found');
+        }
+        orgId = body.organizationId;
+      }
+    }
+
+    if (
+      body.role === 'SUPERADMIN' &&
+      inviterRole !== 'SUPERADMIN' &&
+      !user?.isTakkaAdmin
+    ) {
+      throw new ForbiddenException('Only super admins can invite super admins');
+    }
+
+    if (body.makeTakkaAdmin) {
+      if (!user?.isTakkaAdmin) {
+        throw new ForbiddenException('Unauthorized');
+      }
+
+      const targetOrg = await this.getOrgById(orgId);
+      if (targetOrg?.name !== 'Takkatech') {
+        throw new Error('Takka admin can only be invited to Takkatech');
+      }
+    }
+
+    const { organizationId, organizationName, ...inviteBody } = body;
     const timeLimit = dayjs().add(2, 'day').format('YYYY-MM-DD HH:mm:ss');
     const id = makeId(5);
     const url =
       process.env.FRONTEND_URL +
-      `/?org=${AuthService.signJWT({ ...body, orgId, timeLimit, id })}`;
+      `/?org=${AuthService.signJWT({ ...inviteBody, orgId, timeLimit, id })}`;
+
     if (body.sendEmail) {
       await this._notificationsService.sendEmail(
         body.email,

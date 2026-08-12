@@ -42,7 +42,7 @@ export class AuthService {
       | boolean
       | {
           orgId: string;
-          role: 'USER' | 'ADMIN';
+          role: 'USER' | 'ADMIN' | 'SUPERADMIN';
           id: string;
           makeTakkaAdmin?: boolean;
         }
@@ -166,7 +166,7 @@ export class AuthService {
 
       return getOrg as {
         email: string;
-        role: 'USER' | 'ADMIN';
+        role: 'USER' | 'ADMIN' | 'SUPERADMIN';
         orgId: string;
         id: string;
         makeTakkaAdmin?: boolean;
