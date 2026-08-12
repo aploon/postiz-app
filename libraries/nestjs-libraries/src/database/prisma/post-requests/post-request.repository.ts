@@ -227,10 +227,13 @@ export class PostRequestRepository {
     });
   }
 
-  updateStatus(id: string, status: PostRequestStatus) {
+  updateStatus(id: string, status: PostRequestStatus, link?: string) {
     return this._postRequest.model.postRequest.update({
       where: { id },
-      data: { status },
+      data: {
+        status,
+        ...(link !== undefined ? { link } : {}),
+      },
       include: postRequestAdminInclude,
     });
   }

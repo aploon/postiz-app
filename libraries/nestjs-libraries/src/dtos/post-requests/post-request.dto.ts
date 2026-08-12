@@ -6,6 +6,8 @@ import {
   IsIn,
   IsOptional,
   IsString,
+  IsUrl,
+  ValidateIf,
 } from 'class-validator';
 import { PostRequestStatus } from '@prisma/client';
 
@@ -59,4 +61,9 @@ export class UpdatePostRequestStatusDto {
   @IsEnum(PostRequestStatus)
   @IsDefined()
   status: PostRequestStatus;
+
+  @ValidateIf((o) => o.status === PostRequestStatus.PUBLISHED)
+  @IsString()
+  @IsUrl({}, { message: 'A valid article link is required to publish' })
+  link?: string;
 }

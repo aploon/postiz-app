@@ -103,6 +103,11 @@ export class PostRequestsController {
     @Param('id') id: string,
     @Body() body: UpdatePostRequestStatusDto
   ) {
-    return this._postRequestService.updateStatus(user, id, body.status);
+    return this._postRequestService.updateStatus(
+      user,
+      id,
+      body.status,
+      body.link
+    );
   }
 }

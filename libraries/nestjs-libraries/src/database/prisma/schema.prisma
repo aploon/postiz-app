@@ -985,6 +985,7 @@ model PostRequest {
   id              String            @id @default(uuid())
   title           String
   description     String
+  link            String?
   status          PostRequestStatus @default(DRAFT)
   publishDate     DateTime
   organizationId  String
