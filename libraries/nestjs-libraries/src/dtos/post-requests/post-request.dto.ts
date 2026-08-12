@@ -25,6 +25,11 @@ export class CreatePostRequestDto {
   publishDate: string;
 
   @IsOptional()
+  @ValidateIf((_, value) => value !== null && value !== undefined)
+  @IsString()
+  categoryId?: string | null;
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   documentIds?: string[];
@@ -46,6 +51,11 @@ export class UpdatePostRequestDto {
   @IsDateString()
   @IsDefined()
   publishDate: string;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null && value !== undefined)
+  @IsString()
+  categoryId?: string | null;
 
   @IsOptional()
   @IsArray()

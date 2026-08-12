@@ -32,6 +32,8 @@ type PostRequestItem = {
   link?: string | null;
   status: string;
   publishDate: string;
+  categoryId?: string | null;
+  category?: { id: string; name: string } | null;
   createdBy?: { id: string; name?: string | null; email: string };
   organization?: { id: string; name: string };
   documents?: PostRequestDocument[];
@@ -42,7 +44,13 @@ type PostRequestFormValues = {
   description: string;
   publishDate: string;
   status: 'DRAFT' | 'REQUESTED';
+  categoryId: string;
   documentIds: string[];
+};
+
+type PostRequestCategoryItem = {
+  id: string;
+  name: string;
 };
 
 const EDITABLE = ['DRAFT', 'REQUESTED'];
@@ -193,6 +201,26 @@ const usePostRequestOrganizations = (enabled: boolean) => {
   );
 };
 
+const usePostRequestCategories = (enabled: boolean) => {
+  const fetch = useFetch();
+  const load = useCallback(async () => {
+    return (await fetch('/post-request-categories')).json();
+  }, [fetch]);
+
+  return useSWR<PostRequestCategoryItem[]>(
+    enabled ? 'post-request-categories-select' : null,
+    load,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      revalidateIfStale: false,
+      revalidateOnMount: true,
+      refreshWhenHidden: false,
+      refreshWhenOffline: false,
+    }
+  );
+};
+
 const PostRequestForm = ({
   data,
   reload,
@@ -212,6 +240,8 @@ const PostRequestForm = ({
     { id: string; name: string; file: File }[]
   >([]);
   const [saving, setSaving] = useState(false);
+  const { data: categoriesData } = usePostRequestCategories(true);
+  const categories = Array.isArray(categoriesData) ? categoriesData : [];
 
   const form = useForm<PostRequestFormValues>({
     defaultValues: {
@@ -223,6 +253,7 @@ const PostRequestForm = ({
       status: (data?.status === 'REQUESTED' ? 'REQUESTED' : 'DRAFT') as
         | 'DRAFT'
         | 'REQUESTED',
+      categoryId: data?.categoryId || data?.category?.id || '',
       documentIds: (data?.documents || []).map((d) => d.id),
     },
   });
@@ -297,6 +328,7 @@ const PostRequestForm = ({
               description: values.description,
               publishDate: dayjs(values.publishDate).toISOString(),
               status: values.status,
+              categoryId: values.categoryId || null,
               documentIds,
             }),
           }
@@ -343,6 +375,14 @@ const PostRequestForm = ({
           name="description"
           label={t('description', 'Description')}
         />
+        <Select name="categoryId" label={t('category', 'Category')}>
+          <option value="">{t('no_category', 'No category')}</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </Select>
         <Input
           name="publishDate"
           label={t('publish_date', 'Publish date')}
@@ -457,6 +497,15 @@ const PostRequestView = ({ data }: { data: PostRequestItem }) => {
           {data.description}
         </div>
       </div>
+
+      {data.category?.name && (
+        <div className="border border-newTableBorder rounded-[8px] bg-newTableHeader p-[16px]">
+          <div className="text-[12px] uppercase tracking-wide text-newTableText mb-[8px]">
+            {t('category', 'Category')}
+          </div>
+          <div className="text-[14px]">{data.category.name}</div>
+        </div>
+      )}
 
       {data.link && (
         <div className="border border-newTableBorder rounded-[8px] bg-newTableHeader p-[16px]">
@@ -905,6 +954,11 @@ export const PostRequestsComponent = () => {
                     <div className="text-[16px] font-[500] truncate">
                       {item.title}
                     </div>
+                    {item.category?.name && (
+                      <div className="text-[12px] text-newTableText mt-[2px] truncate">
+                        {item.category.name}
+                      </div>
+                    )}
                   </div>
                   {isTakkaAdmin && (
                     <div className="text-[14px] truncate text-newTableText min-w-0">

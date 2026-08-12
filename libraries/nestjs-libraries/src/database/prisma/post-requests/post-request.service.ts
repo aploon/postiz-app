@@ -22,7 +22,6 @@ const EDITABLE_STATUSES: PostRequestStatus[] = [
 const CLIENT_NOTIFY_STATUSES: PostRequestStatus[] = [
   PostRequestStatus.APPROVED,
   PostRequestStatus.REJECTED,
-  PostRequestStatus.SCHEDULED,
   PostRequestStatus.PUBLISHED,
 ];
 

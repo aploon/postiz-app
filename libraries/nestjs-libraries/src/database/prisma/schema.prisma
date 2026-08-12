@@ -33,9 +33,10 @@ model Organization {
   plugs               Plugs[]
   post                Post[]               @relation("organization")
   submittedPost       Post[]               @relation("submittedForOrg")
-  postRequests        PostRequest[]
-  otherRequests       OtherRequest[]
-  sets                Sets[]
+  postRequests           PostRequest[]
+  postRequestCategories  PostRequestCategory[]
+  otherRequests          OtherRequest[]
+  sets                   Sets[]
   signatures          Signatures[]
   subscription        Subscription?
   tags                Tags[]
@@ -981,25 +982,41 @@ enum PostRequestStatus {
   PUBLISHED
 }
 
+model PostRequestCategory {
+  id             String       @id @default(uuid())
+  name           String
+  organizationId String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  postRequests   PostRequest[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
 model PostRequest {
-  id              String            @id @default(uuid())
+  id              String               @id @default(uuid())
   title           String
   description     String
   link            String?
-  status          PostRequestStatus @default(DRAFT)
+  status          PostRequestStatus    @default(DRAFT)
   publishDate     DateTime
+  categoryId      String?
   organizationId  String
   createdByUserId String
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  organization    Organization      @relation(fields: [organizationId], references: [id])
-  createdBy       User              @relation(fields: [createdByUserId], references: [id])
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  organization    Organization         @relation(fields: [organizationId], references: [id])
+  createdBy       User                 @relation(fields: [createdByUserId], references: [id])
+  category        PostRequestCategory? @relation(fields: [categoryId], references: [id])
   documents       Media[]
 
   @@index([organizationId])
   @@index([createdByUserId])
   @@index([status])
   @@index([publishDate])
+  @@index([categoryId])
 }
 
 enum OtherRequestStatus {

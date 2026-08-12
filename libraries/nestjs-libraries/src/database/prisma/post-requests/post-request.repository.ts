@@ -8,6 +8,12 @@ import {
 
 const postRequestInclude = {
   documents: true,
+  category: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
   createdBy: {
     select: {
       id: true,
@@ -38,7 +44,8 @@ export type ListAdminFilters = {
 export class PostRequestRepository {
   constructor(
     private _postRequest: PrismaRepository<'postRequest'>,
-    private _media: PrismaRepository<'media'>
+    private _media: PrismaRepository<'media'>,
+    private _category: PrismaRepository<'postRequestCategory'>
   ) {}
 
   async list(
@@ -178,6 +185,8 @@ export class PostRequestRepository {
   }
 
   async create(orgId: string, userId: string, body: CreatePostRequestDto) {
+    const categoryId = await this.resolveCategoryId(orgId, body.categoryId);
+
     const created = await this._postRequest.model.postRequest.create({
       data: {
         title: body.title,
@@ -188,6 +197,7 @@ export class PostRequestRepository {
           : PostRequestStatus.DRAFT,
         organizationId: orgId,
         createdByUserId: userId,
+        ...(categoryId ? { categoryId } : {}),
       },
     });
 
@@ -199,6 +209,11 @@ export class PostRequestRepository {
   }
 
   async update(orgId: string, id: string, body: UpdatePostRequestDto) {
+    const categoryId =
+      body.categoryId === undefined
+        ? undefined
+        : await this.resolveCategoryId(orgId, body.categoryId);
+
     await this._postRequest.model.postRequest.update({
       where: { id },
       data: {
@@ -206,6 +221,7 @@ export class PostRequestRepository {
         description: body.description,
         publishDate: new Date(body.publishDate),
         ...(body.status ? { status: body.status } : {}),
+        ...(categoryId !== undefined ? { categoryId } : {}),
       },
     });
 
@@ -294,5 +310,30 @@ export class PostRequestRepository {
         data: { postRequestId },
       });
     }
+  }
+
+  private async resolveCategoryId(
+    orgId: string,
+    categoryId?: string | null
+  ): Promise<string | null> {
+    if (!categoryId) {
+      return null;
+    }
+
+    const category = await this._category.model.postRequestCategory.findFirst({
+      where: {
+        id: categoryId,
+        organizationId: orgId,
+      },
+      select: { id: true },
+    });
+
+    if (!category) {
+      throw new BadRequestException(
+        'Category does not belong to this organization'
+      );
+    }
+
+    return category.id;
   }
 }
