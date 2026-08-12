@@ -245,136 +245,26 @@ On peut détailler : endpoints d’une future API slim, modèle de données mini
 
 ## Créer un super admin
 
+Promouvoir un utilisateur existant en super admin plateforme (`User.isSuperAdmin`) :
+
 ```bash
-pnpm dlx prisma@6.5.0 db execute --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma --stdin <<'EOF'
-UPDATE "User" SET "isSuperAdmin" = true WHERE email = 'ton@email.com';
-EOF
+pnpm run seed:super-admin -- ton@email.com
 ```
+
+Le script est idempotent : si l'utilisateur l'est déjà, il ne fait rien.
+L'email doit exister en base (compte déjà créé).
+
+Implémentation : `scripts/seed-super-admin.mjs`
 
 ## Créer le premier Takka admin (bootstrap)
 
-Si tu n'as encore aucun user `isTakkaAdmin=true`, tu peux bootstrapper le premier admin en exécutant un seed SQL.
-Remplace `SEED_EMAIL` / `SEED_PASSWORD` (ou l'email dans le SQL) avant d'exécuter.
-
-En raw SQL, Prisma ne génère pas les `@default` : il faut fournir `id` et `updatedAt` explicitement.
-
-### Linux / macOS (bash)
+Si tu n'as encore aucun user `isTakkaAdmin=true`, exécute depuis la racine du repo :
 
 ```bash
-SEED_EMAIL='ton@email.com'
-SEED_PASSWORD='ton-password'
-
-HASH="$(node -e 'const { hashSync } = require("bcrypt"); console.log(hashSync(process.env.SEED_PASSWORD, 10));')"
-
-pnpm dlx prisma@6.5.0 db execute --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma --stdin <<EOF
-INSERT INTO "Organization" ("id", "name", "apiKey", "allowTrial", "isTrailing", "updatedAt")
-SELECT gen_random_uuid()::text, 'Takkatech', 'seed', false, false, NOW()
-WHERE NOT EXISTS (SELECT 1 FROM "Organization" WHERE "name" = 'Takkatech');
-
-INSERT INTO "User" (
-  "id",
-  "email",
-  "password",
-  "providerName",
-  "providerId",
-  "timezone",
-  "activated",
-  "isTakkaAdmin",
-  "isSuperAdmin",
-  "ip",
-  "agent",
-  "updatedAt"
-)
-VALUES (
-  gen_random_uuid()::text,
-  '${SEED_EMAIL}',
-  '${HASH}',
-  'LOCAL',
-  '',
-  0,
-  true,
-  true,
-  false,
-  'seed:first-takka-admin',
-  'seed:first-takka-admin',
-  NOW()
-)
-ON CONFLICT ("email", "providerName") DO UPDATE SET
-  "password" = EXCLUDED."password",
-  "activated" = true,
-  "isTakkaAdmin" = true,
-  "isSuperAdmin" = false,
-  "updatedAt" = NOW();
-
-INSERT INTO "UserOrganization" ("id", "userId", "organizationId", "role", "updatedAt")
-SELECT gen_random_uuid()::text, u."id", o."id", 'SUPERADMIN', NOW()
-FROM "User" u
-CROSS JOIN "Organization" o
-WHERE u."email" = '${SEED_EMAIL}'
-  AND u."providerName" = 'LOCAL'
-  AND o."name" = 'Takkatech'
-ON CONFLICT ("userId", "organizationId") DO NOTHING;
-EOF
+pnpm run seed:first-takka-admin -- ton@email.com ton-password
 ```
 
-### Windows (Git Bash)
+Le script est idempotent : s'il existe déjà un Takka admin, il ne fait rien.
+Il crée l'organisation `Takkatech` si besoin, puis l'utilisateur `LOCAL` avec `isTakkaAdmin=true` et le rôle `SUPERADMIN` sur cette org.
 
-Sous Git Bash, utilise `node.exe` (pas `node`) : le wrapper `winpty` échoue avec `stdout is not a tty` dans `$()`.
-Passe aussi le mot de passe en argument.
-
-```bash
-export SEED_EMAIL='ton@email.com'
-export SEED_PASSWORD='ton-password'
-
-HASH=$(node.exe -e "const { hashSync } = require('bcrypt'); console.log(hashSync(process.argv[1], 10));" "$SEED_PASSWORD")
-
-pnpm dlx prisma@6.5.0 db execute --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma --stdin <<EOF
-INSERT INTO "Organization" ("id", "name", "apiKey", "allowTrial", "isTrailing", "updatedAt")
-SELECT gen_random_uuid()::text, 'Takkatech', 'seed', false, false, NOW()
-WHERE NOT EXISTS (SELECT 1 FROM "Organization" WHERE "name" = 'Takkatech');
-
-INSERT INTO "User" (
-  "id",
-  "email",
-  "password",
-  "providerName",
-  "providerId",
-  "timezone",
-  "activated",
-  "isTakkaAdmin",
-  "isSuperAdmin",
-  "ip",
-  "agent",
-  "updatedAt"
-)
-VALUES (
-  gen_random_uuid()::text,
-  '${SEED_EMAIL}',
-  '${HASH}',
-  'LOCAL',
-  '',
-  0,
-  true,
-  true,
-  false,
-  'seed:first-takka-admin',
-  'seed:first-takka-admin',
-  NOW()
-)
-ON CONFLICT ("email", "providerName") DO UPDATE SET
-  "password" = EXCLUDED."password",
-  "activated" = true,
-  "isTakkaAdmin" = true,
-  "isSuperAdmin" = false,
-  "updatedAt" = NOW();
-
-INSERT INTO "UserOrganization" ("id", "userId", "organizationId", "role", "updatedAt")
-SELECT gen_random_uuid()::text, u."id", o."id", 'SUPERADMIN', NOW()
-FROM "User" u
-CROSS JOIN "Organization" o
-WHERE u."email" = '${SEED_EMAIL}'
-  AND u."providerName" = 'LOCAL'
-  AND o."name" = 'Takkatech'
-ON CONFLICT ("userId", "organizationId") DO NOTHING;
-EOF
-```
+Implémentation : `scripts/seed-first-takka-admin.mjs`

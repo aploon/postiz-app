@@ -47,6 +47,8 @@
     "docker-create": "./var/docker/docker-create.sh",
     "postinstall": "pnpm run prisma-generate",
     "puppeteer:chrome": "pnpm exec puppeteer browsers install chrome",
+    "seed:first-takka-admin": "dotenv -e .env -- node scripts/seed-first-takka-admin.mjs",
+    "seed:super-admin": "dotenv -e .env -- node scripts/seed-super-admin.mjs",
     "test": "jest --coverage --detectOpenHandles --reporters=default --reporters=jest-junit"
   },
   "dependencies": {
