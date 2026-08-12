@@ -3,6 +3,7 @@ import {
   IsDefined,
   IsEmail,
   IsIn,
+  IsOptional,
   IsString,
   ValidateIf,
 } from 'class-validator';
@@ -20,4 +21,8 @@ export class AddTeamMemberDto {
   @IsDefined()
   @IsBoolean()
   sendEmail: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  makeTakkaAdmin?: boolean;
 }

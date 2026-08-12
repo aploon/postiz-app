@@ -28,7 +28,11 @@ const roles = [
     value: 'ADMIN',
   },
 ];
-export const AddMember = () => {
+export const AddMember = ({
+  showMakeTakkaAdmin,
+}: {
+  showMakeTakkaAdmin: boolean;
+}) => {
   const modals = useModals();
   const fetch = useFetch();
   const toast = useToaster();
@@ -40,6 +44,7 @@ export const AddMember = () => {
       email: '',
       role: '',
       sendEmail: true,
+      makeTakkaAdmin: false,
     },
     resolver,
     mode: 'onChange',
@@ -49,7 +54,12 @@ export const AddMember = () => {
     name: 'sendEmail',
   });
   const submit = useCallback(
-    async (values: { email: string; role: string; sendEmail: boolean }) => {
+    async (values: {
+      email: string;
+      role: string;
+      sendEmail: boolean;
+      makeTakkaAdmin: boolean;
+    }) => {
       const { url } = await (
         await fetch('/settings/team', {
           method: 'POST',
@@ -89,6 +99,14 @@ export const AddMember = () => {
               </option>
             ))}
           </Select>
+
+          {showMakeTakkaAdmin && (
+            <div className="flex gap-[5px] items-center">
+              <Checkbox name="makeTakkaAdmin" />
+              <div>{t('make_takka_admin', 'Make as takka admin')}</div>
+            </div>
+          )}
+
           <div className="flex gap-[5px]">
             <div>
               <Checkbox name="sendEmail" />
@@ -126,16 +144,34 @@ export const TeamsComponent = () => {
       };
     }>;
   }, []);
-  const addMember = useCallback(() => {
+
+  const loadPersonalInfo = useCallback(async () => {
+    return (await (await fetch('/user/personal')).json()) as {
+      organization?: { id: string; name: string } | null;
+    };
+  }, [fetch]);
+
+  const { data: personalInfo } = useSWR('/user/personal', loadPersonalInfo, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    revalidateIfStale: false,
+    revalidateOnMount: true,
+    refreshWhenHidden: false,
+    refreshWhenOffline: false,
+  });
+
+  const showMakeTakkaAdmin = personalInfo?.organization?.name === 'Takkatech';
+
+  const addMemberWithOrg = useCallback(() => {
     modals.openModal({
       classNames: {
         modal: 'bg-transparent text-textColor',
       },
       title: t('top_title_add_member', 'Add Member'),
       withCloseButton: true,
-      children: <AddMember />,
+      children: <AddMember showMakeTakkaAdmin={!!showMakeTakkaAdmin} />,
     });
-  }, [t]);
+  }, [modals, showMakeTakkaAdmin, t]);
   const { data, mutate } = useSWR('/api/teams', loadTeam, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
@@ -222,7 +258,7 @@ export const TeamsComponent = () => {
           ))}
         </div>
         <div>
-          <Button onClick={addMember}>
+          <Button onClick={addMemberWithOrg}>
             {t('add_another_member', 'Add another member')}
           </Button>
         </div>

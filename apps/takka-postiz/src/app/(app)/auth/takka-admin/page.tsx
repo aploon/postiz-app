@@ -1,5 +1,5 @@
-import { RegisterTakkaAdmin } from '@gitroom/takka-postiz/components/auth/register.takka.admin';
 import { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default async function TakkaAdminAuth() {
-  return <RegisterTakkaAdmin />;
+  redirect('/auth/login');
 }

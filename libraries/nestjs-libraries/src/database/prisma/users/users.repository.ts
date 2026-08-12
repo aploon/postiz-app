@@ -207,4 +207,12 @@ export class UsersRepository {
       },
     });
   }
+
+  countTakkaAdmins() {
+    return this._user.model.user.count({
+      where: {
+        isTakkaAdmin: true,
+      },
+    });
+  }
 }
