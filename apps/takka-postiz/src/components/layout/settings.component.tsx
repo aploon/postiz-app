@@ -33,7 +33,10 @@ export const SettingsPopup: FC<{
       label: t('global_settings', 'Global Settings'),
     });
 
-    if (role !== 'USER' && user?.tier?.team_members && isGeneral) {
+    if (
+      (role !== 'USER' && user?.tier?.team_members && isGeneral) ||
+      user?.isTakkaAdmin
+    ) {
       arr.push({ tab: 'teams', label: t('teams', 'Teams') });
     }
 
@@ -89,7 +92,9 @@ export const SettingsPopup: FC<{
               <GlobalSettings />
             </div>
           )}
-          {tab === 'teams' && !!user?.tier?.team_members && isGeneral && (
+          {tab === 'teams' &&
+            (!!user?.tier?.team_members || user?.isTakkaAdmin) &&
+            isGeneral && (
             <div>
               <TeamsComponent />
             </div>

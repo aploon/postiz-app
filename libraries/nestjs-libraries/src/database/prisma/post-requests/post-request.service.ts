@@ -22,7 +22,6 @@ const EDITABLE_STATUSES: PostRequestStatus[] = [
 const CLIENT_NOTIFY_STATUSES: PostRequestStatus[] = [
   PostRequestStatus.APPROVED,
   PostRequestStatus.REJECTED,
-  PostRequestStatus.SCHEDULED,
   PostRequestStatus.PUBLISHED,
 ];
 
@@ -182,13 +181,26 @@ export class PostRequestService {
     return updated;
   }
 
-  async updateStatus(user: User, id: string, status: PostRequestStatus) {
+  async updateStatus(
+    user: User,
+    id: string,
+    status: PostRequestStatus,
+    link?: string
+  ) {
     if (!user?.isTakkaAdmin) {
       throw new ForbiddenException('Unauthorized');
     }
 
     if (status === PostRequestStatus.DRAFT) {
       throw new BadRequestException('Cannot set status to DRAFT');
+    }
+
+    if (status === PostRequestStatus.PUBLISHED) {
+      const trimmedLink = link?.trim();
+      if (!trimmedLink) {
+        throw new BadRequestException('Article link is required to publish');
+      }
+      link = trimmedLink;
     }
 
     const postRequest = await this._postRequestRepository.getByIdAdmin(id);
@@ -200,7 +212,11 @@ export class PostRequestService {
       return postRequest;
     }
 
-    const updated = await this._postRequestRepository.updateStatus(id, status);
+    const updated = await this._postRequestRepository.updateStatus(
+      id,
+      status,
+      link
+    );
     await this.notifyStatusChange(updated);
     return updated;
   }

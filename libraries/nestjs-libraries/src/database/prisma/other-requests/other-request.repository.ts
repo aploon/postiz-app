@@ -221,13 +221,14 @@ export class OtherRequestRepository {
     });
   }
 
-  async listForMonthlyReport(from: Date, to: Date) {
+  async listForMonthlyReport(from: Date, to: Date, organizationId?: string) {
     return this._otherRequest.model.otherRequest.findMany({
       where: {
         createdAt: {
           gte: from,
           lte: to,
         },
+        ...(organizationId ? { organizationId } : {}),
       },
       include: otherRequestAdminInclude,
       orderBy: [{ organizationId: 'asc' }, { createdAt: 'asc' }],

@@ -29,8 +29,11 @@ type PostRequestItem = {
   id: string;
   title: string;
   description: string;
+  link?: string | null;
   status: string;
   publishDate: string;
+  categoryId?: string | null;
+  category?: { id: string; name: string } | null;
   createdBy?: { id: string; name?: string | null; email: string };
   organization?: { id: string; name: string };
   documents?: PostRequestDocument[];
@@ -41,7 +44,13 @@ type PostRequestFormValues = {
   description: string;
   publishDate: string;
   status: 'DRAFT' | 'REQUESTED';
+  categoryId: string;
   documentIds: string[];
+};
+
+type PostRequestCategoryItem = {
+  id: string;
+  name: string;
 };
 
 const EDITABLE = ['DRAFT', 'REQUESTED'];
@@ -59,6 +68,20 @@ const ADMIN_ACTIONS: { status: string; label: string; danger?: boolean }[] = [
   { status: 'SCHEDULED', label: 'Schedule' },
   { status: 'PUBLISHED', label: 'Publish' },
 ];
+
+const getAdminActionsForStatus = (status: string) =>
+  ADMIN_ACTIONS.filter((action) => {
+    if (action.status === status) {
+      return false;
+    }
+    if (status === 'SCHEDULED' && action.status === 'APPROVED') {
+      return false;
+    }
+    if (action.status === 'PUBLISHED' && status !== 'SCHEDULED') {
+      return false;
+    }
+    return true;
+  });
 
 const STATUS_STYLES: Record<string, string> = {
   DRAFT: 'bg-newColColor text-newTableText',
@@ -178,6 +201,26 @@ const usePostRequestOrganizations = (enabled: boolean) => {
   );
 };
 
+const usePostRequestCategories = (enabled: boolean) => {
+  const fetch = useFetch();
+  const load = useCallback(async () => {
+    return (await fetch('/post-request-categories')).json();
+  }, [fetch]);
+
+  return useSWR<PostRequestCategoryItem[]>(
+    enabled ? 'post-request-categories-select' : null,
+    load,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      revalidateIfStale: false,
+      revalidateOnMount: true,
+      refreshWhenHidden: false,
+      refreshWhenOffline: false,
+    }
+  );
+};
+
 const PostRequestForm = ({
   data,
   reload,
@@ -197,6 +240,8 @@ const PostRequestForm = ({
     { id: string; name: string; file: File }[]
   >([]);
   const [saving, setSaving] = useState(false);
+  const { data: categoriesData } = usePostRequestCategories(true);
+  const categories = Array.isArray(categoriesData) ? categoriesData : [];
 
   const form = useForm<PostRequestFormValues>({
     defaultValues: {
@@ -208,6 +253,7 @@ const PostRequestForm = ({
       status: (data?.status === 'REQUESTED' ? 'REQUESTED' : 'DRAFT') as
         | 'DRAFT'
         | 'REQUESTED',
+      categoryId: data?.categoryId || data?.category?.id || '',
       documentIds: (data?.documents || []).map((d) => d.id),
     },
   });
@@ -282,6 +328,7 @@ const PostRequestForm = ({
               description: values.description,
               publishDate: dayjs(values.publishDate).toISOString(),
               status: values.status,
+              categoryId: values.categoryId || null,
               documentIds,
             }),
           }
@@ -328,6 +375,14 @@ const PostRequestForm = ({
           name="description"
           label={t('description', 'Description')}
         />
+        <Select name="categoryId" label={t('category', 'Category')}>
+          <option value="">{t('no_category', 'No category')}</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </Select>
         <Input
           name="publishDate"
           label={t('publish_date', 'Publish date')}
@@ -443,6 +498,31 @@ const PostRequestView = ({ data }: { data: PostRequestItem }) => {
         </div>
       </div>
 
+      <div className="border border-newTableBorder rounded-[8px] bg-newTableHeader p-[16px]">
+        <div className="text-[12px] uppercase tracking-wide text-newTableText mb-[8px]">
+          {t('category', 'Category')}
+        </div>
+        <div className="text-[14px]">
+          {data.category?.name || t('no_category', 'No category')}
+        </div>
+      </div>
+
+      {data.link && (
+        <div className="border border-newTableBorder rounded-[8px] bg-newTableHeader p-[16px]">
+          <div className="text-[12px] uppercase tracking-wide text-newTableText mb-[8px]">
+            {t('article_link', 'Article link')}
+          </div>
+          <a
+            href={data.link}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[14px] underline break-all"
+          >
+            {data.link}
+          </a>
+        </div>
+      )}
+
       <div className="border border-newTableBorder rounded-[8px] overflow-hidden">
         <div className="px-[16px] py-[10px] bg-newTableHeader border-b border-newTableBorder text-[12px] uppercase tracking-wide text-newTableText">
           {t('documents', 'Documents')}
@@ -478,6 +558,86 @@ const PostRequestView = ({ data }: { data: PostRequestItem }) => {
       <div className="flex justify-end">
         <Button type="button" secondary onClick={() => modal.closeAll()}>
           {t('close', 'Close')}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+const PublishPostRequestModal = ({
+  data,
+  reload,
+}: {
+  data: PostRequestItem;
+  reload: () => void;
+}) => {
+  const fetch = useFetch();
+  const modal = useModals();
+  const toaster = useToaster();
+  const t = useT();
+  const [link, setLink] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    const trimmedLink = link.trim();
+    if (!trimmedLink) {
+      toaster.show(
+        t('article_link_required', 'Article link is required to publish'),
+        'warning'
+      );
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch(`/post-requests/${data.id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'PUBLISHED', link: trimmedLink }),
+      });
+      if (!response.ok) {
+        toaster.show(
+          t('post_request_status_failed', 'Failed to update status'),
+          'warning'
+        );
+        return;
+      }
+      toaster.show(
+        t('post_request_status_updated', 'Status updated'),
+        'success'
+      );
+      modal.closeAll();
+      reload();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-[16px] p-[16px] pt-0 w-[480px] max-w-full">
+      <p className="text-[14px] text-newTableText">
+        {t(
+          'publish_post_request_description',
+          'Enter the published article URL to mark this request as published.'
+        )}
+      </p>
+      <div className="flex flex-col gap-[6px]">
+        <label className="text-[12px] text-newTableText">
+          {t('article_link', 'Article link')}
+        </label>
+        <input
+          type="url"
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
+          placeholder="https://..."
+          className="bg-newBgColorInner h-[38px] border border-newTableBorder rounded-[8px] px-[10px] text-[14px] text-textColor outline-none w-full"
+        />
+      </div>
+      <div className="flex justify-end gap-[8px]">
+        <Button type="button" secondary onClick={() => modal.closeAll()}>
+          {t('cancel', 'Cancel')}
+        </Button>
+        <Button type="button" onClick={submit} loading={saving}>
+          {t('publish', 'Publish')}
         </Button>
       </div>
     </div>
@@ -533,6 +693,17 @@ export const PostRequestsComponent = () => {
       });
     },
     [modal, t]
+  );
+
+  const openPublish = useCallback(
+    (item: PostRequestItem) => () => {
+      modal.openModal({
+        title: t('publish_post_request', 'Publish post request'),
+        withCloseButton: true,
+        children: <PublishPostRequestModal data={item} reload={mutate} />,
+      });
+    },
+    [modal, mutate, t]
   );
 
   const remove = useCallback(
@@ -783,6 +954,11 @@ export const PostRequestsComponent = () => {
                     <div className="text-[16px] font-[500] truncate">
                       {item.title}
                     </div>
+                    {item.category?.name && (
+                      <div className="text-[12px] text-newTableText mt-[2px] truncate">
+                        {item.category.name}
+                      </div>
+                    )}
                   </div>
                   {isTakkaAdmin && (
                     <div className="text-[14px] truncate text-newTableText min-w-0">
@@ -808,13 +984,15 @@ export const PostRequestsComponent = () => {
                       {t('view', 'View')}
                     </ActionButton>
                     {showAdminActions &&
-                      ADMIN_ACTIONS.filter(
-                        (action) => action.status !== item.status
-                      ).map((action) => (
+                      getAdminActionsForStatus(item.status).map((action) => (
                         <ActionButton
                           key={action.status}
                           danger={action.danger}
-                          onClick={changeStatus(item, action.status)}
+                          onClick={
+                            action.status === 'PUBLISHED'
+                              ? openPublish(item)
+                              : changeStatus(item, action.status)
+                          }
                         >
                           {t(
                             action.label.toLowerCase(),

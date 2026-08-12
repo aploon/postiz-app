@@ -38,7 +38,14 @@ export class AuthService {
     body: CreateOrgUserDto | LoginUserDto,
     ip: string,
     userAgent: string,
-    addToOrg?: boolean | { orgId: string; role: 'USER' | 'ADMIN'; id: string }
+    addToOrg?:
+      | boolean
+      | {
+          orgId: string;
+          role: 'USER' | 'ADMIN' | 'SUPERADMIN';
+          id: string;
+          makeTakkaAdmin?: boolean;
+        }
   ) {
     if (provider === Provider.LOCAL) {
       if (process.env.DISALLOW_PLUS && body.email.includes('+')) {
@@ -53,6 +60,14 @@ export class AuthService {
           throw new Error('Email already exists');
         }
 
+        const isTeamInvite =
+          !!addToOrg && typeof addToOrg !== 'boolean';
+        if (!isTeamInvite) {
+          // Organization user registration is only allowed through team invites
+          // (invitation cookie/JWT must be present).
+          throw new Error('Registration requires invitation');
+        }
+
         if (!(await this.canRegister(provider))) {
           throw new Error('Registration is disabled');
         }
@@ -64,17 +79,28 @@ export class AuthService {
         // - never create a new organization
         // - create user only, then attach it to the invited org
         if (addToOrg && typeof addToOrg !== 'boolean') {
-          createdUser = await this._organizationService.createUserOnly(
-            body,
-            ip,
-            userAgent
-          );
-          addedOrg = await this._organizationService.addUserToOrg(
-            createdUser.id,
-            addToOrg.id,
-            addToOrg.orgId,
-            addToOrg.role
-          );
+          if (addToOrg.makeTakkaAdmin) {
+            const created = await this._organizationService.createTakkaAdminUser(
+              { email: body.email, password: body.password },
+              ip,
+              userAgent
+            );
+
+            createdUser = created.user;
+            addedOrg = { organizationId: created.organization.id };
+          } else {
+            createdUser = await this._organizationService.createUserOnly(
+              body,
+              ip,
+              userAgent
+            );
+            addedOrg = await this._organizationService.addUserToOrg(
+              createdUser.id,
+              addToOrg.id,
+              addToOrg.orgId,
+              addToOrg.role
+            );
+          }
         } else {
           if (!body.company || body.company.trim().length < 3) {
             throw new Error('Company is required');
@@ -140,9 +166,10 @@ export class AuthService {
 
       return getOrg as {
         email: string;
-        role: 'USER' | 'ADMIN';
+        role: 'USER' | 'ADMIN' | 'SUPERADMIN';
         orgId: string;
         id: string;
+        makeTakkaAdmin?: boolean;
       };
     } catch (err) {
       return false;

@@ -130,6 +130,11 @@ export async function proxy(request: NextRequest) {
       return redirect;
     }
 
+    // Public /auth/takka-admin registration is retired.
+    if (nextUrl.pathname === '/auth/takka-admin') {
+      return NextResponse.redirect(new URL('/auth/login', nextUrl.href));
+    }
+
     // Client register (/auth) is hidden — default to login unless invite/oauth.
     if (
       nextUrl.pathname === '/auth' &&
@@ -137,10 +142,7 @@ export async function proxy(request: NextRequest) {
       !nextUrl.searchParams.get('provider') &&
       !nextUrl.searchParams.get('code')
     ) {
-      // Allow register only when opened via logo easter egg (?signup=1).
-      if (nextUrl.searchParams.get('signup') !== '1') {
-        return NextResponse.redirect(new URL('/auth/login', nextUrl.href));
-      }
+      return NextResponse.redirect(new URL('/auth/login', nextUrl.href));
     }
 
     return topResponse;

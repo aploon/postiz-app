@@ -33,6 +33,8 @@ import { SetsService } from '@gitroom/nestjs-libraries/database/prisma/sets/sets
 import { SetsRepository } from '@gitroom/nestjs-libraries/database/prisma/sets/sets.repository';
 import { PostRequestService } from '@gitroom/nestjs-libraries/database/prisma/post-requests/post-request.service';
 import { PostRequestRepository } from '@gitroom/nestjs-libraries/database/prisma/post-requests/post-request.repository';
+import { PostRequestCategoryService } from '@gitroom/nestjs-libraries/database/prisma/post-request-categories/post-request-category.service';
+import { PostRequestCategoryRepository } from '@gitroom/nestjs-libraries/database/prisma/post-request-categories/post-request-category.repository';
 import { OtherRequestService } from '@gitroom/nestjs-libraries/database/prisma/other-requests/other-request.service';
 import { OtherRequestRepository } from '@gitroom/nestjs-libraries/database/prisma/other-requests/other-request.repository';
 import { MonthlyRequestsReportService } from '@gitroom/nestjs-libraries/database/prisma/requests/monthly-requests-report.service';
@@ -96,6 +98,8 @@ import { AdminStatsService } from '@gitroom/nestjs-libraries/database/prisma/adm
     SetsRepository,
     PostRequestService,
     PostRequestRepository,
+    PostRequestCategoryService,
+    PostRequestCategoryRepository,
     OtherRequestService,
     OtherRequestRepository,
     MonthlyRequestsReportService,

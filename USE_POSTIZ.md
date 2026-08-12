@@ -245,8 +245,26 @@ On peut détailler : endpoints d’une future API slim, modèle de données mini
 
 ## Créer un super admin
 
+Promouvoir un utilisateur existant en super admin plateforme (`User.isSuperAdmin`) :
+
 ```bash
-pnpm dlx prisma@6.5.0 db execute --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma --stdin <<'EOF'
-UPDATE "User" SET "isSuperAdmin" = true WHERE email = 'ton@email.com';
-EOF
+pnpm run seed:super-admin -- ton@email.com
 ```
+
+Le script est idempotent : si l'utilisateur l'est déjà, il ne fait rien.
+L'email doit exister en base (compte déjà créé).
+
+Implémentation : `scripts/seed-super-admin.mjs`
+
+## Créer le premier Takka admin (bootstrap)
+
+Si tu n'as encore aucun user `isTakkaAdmin=true`, exécute depuis la racine du repo :
+
+```bash
+pnpm run seed:first-takka-admin -- ton@email.com ton-password
+```
+
+Le script est idempotent : s'il existe déjà un Takka admin, il ne fait rien.
+Il crée l'organisation `Takkatech` si besoin, puis l'utilisateur `LOCAL` avec `isTakkaAdmin=true` et le rôle `SUPERADMIN` sur cette org.
+
+Implémentation : `scripts/seed-first-takka-admin.mjs`

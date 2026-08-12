@@ -6,6 +6,8 @@ import {
   IsIn,
   IsOptional,
   IsString,
+  IsUrl,
+  ValidateIf,
 } from 'class-validator';
 import { PostRequestStatus } from '@prisma/client';
 
@@ -21,6 +23,11 @@ export class CreatePostRequestDto {
   @IsDateString()
   @IsDefined()
   publishDate: string;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null && value !== undefined)
+  @IsString()
+  categoryId?: string | null;
 
   @IsOptional()
   @IsArray()
@@ -46,6 +53,11 @@ export class UpdatePostRequestDto {
   publishDate: string;
 
   @IsOptional()
+  @ValidateIf((_, value) => value !== null && value !== undefined)
+  @IsString()
+  categoryId?: string | null;
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   documentIds?: string[];
@@ -59,4 +71,9 @@ export class UpdatePostRequestStatusDto {
   @IsEnum(PostRequestStatus)
   @IsDefined()
   status: PostRequestStatus;
+
+  @ValidateIf((o) => o.status === PostRequestStatus.PUBLISHED)
+  @IsString()
+  @IsUrl({}, { message: 'A valid article link is required to publish' })
+  link?: string;
 }

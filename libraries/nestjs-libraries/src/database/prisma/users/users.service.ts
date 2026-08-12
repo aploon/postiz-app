@@ -88,4 +88,8 @@ export class UsersService {
   findTakkaAdmins() {
     return this._usersRepository.findTakkaAdmins();
   }
+
+  countTakkaAdmins() {
+    return this._usersRepository.countTakkaAdmins();
+  }
 }

@@ -95,6 +95,29 @@ export const useMenuItem = () => {
       role: [...ALL_CLIENT_ROLES],
     },
     {
+      name: t('categories', 'Categories'),
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          fill="none"
+        >
+          <path
+            d="M3.33333 5.83333C3.33333 5.39131 3.50893 4.96738 3.82149 4.65482C4.13405 4.34226 4.55797 4.16667 5 4.16667H8.33333L10 5.83333H15C15.442 5.83333 15.866 6.00893 16.1785 6.32149C16.4911 6.63405 16.6667 7.05797 16.6667 7.5V14.1667C16.6667 14.6087 16.4911 15.0326 16.1785 15.3452C15.866 15.6577 15.442 15.8333 15 15.8333H5C4.55797 15.8333 4.13405 15.6577 3.82149 15.3452C3.50893 15.0326 3.33333 14.6087 3.33333 14.1667V5.83333Z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+      path: '/post-request-categories',
+      role: [...ALL_CLIENT_ROLES],
+      hideForTakkaAdmin: true,
+    },
+    {
       name: t('organizations', 'Organizations'),
       icon: (
         <svg

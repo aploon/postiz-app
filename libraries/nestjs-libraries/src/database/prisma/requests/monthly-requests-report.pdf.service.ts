@@ -8,6 +8,7 @@ export type RequestsReportPdfRow = {
   title: string;
   type: string;
   status: string;
+  category?: string;
   priority?: string;
   createdAt: Date;
 };
@@ -98,6 +99,7 @@ export class MonthlyRequestsReportPdfService {
         <td>${index + 1}</td>
         <td>${this.escape(row.title)}</td>
         <td>${this.escape(row.type)}</td>
+        <td>${this.escape(row.category || '—')}</td>
         <td>${this.escape(row.status)}</td>
         <td>${this.escape(row.priority || '—')}</td>
         <td>${this.formatDate(row.createdAt)}</td>
@@ -280,6 +282,7 @@ export class MonthlyRequestsReportPdfService {
             <th>#</th>
             <th>Title</th>
             <th>Type</th>
+            <th>Category</th>
             <th>Status</th>
             <th>Priority</th>
             <th>Created</th>
