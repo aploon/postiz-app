@@ -246,23 +246,6 @@ export const RequestsHubComponent = () => {
             )}
           </p>
         </Link>
-
-        {!isTakkaAdmin && (
-          <Link
-            href="/post-request-categories"
-            className="group border border-newTableBorder rounded-[12px] p-[24px] bg-newBgColorInner hover:bg-boxHover transition-colors"
-          >
-            <div className="text-[20px] font-[600]">
-              {t('post_request_categories', 'Post Request Categories')}
-            </div>
-            <p className="text-newTableText text-[14px] mt-[8px]">
-              {t(
-                'post_request_categories_description',
-                'Create categories for your organization and assign them when creating post requests.'
-              )}
-            </p>
-          </Link>
-        )}
       </div>
     </div>
   );

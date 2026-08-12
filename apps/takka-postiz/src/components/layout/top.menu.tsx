@@ -91,11 +91,7 @@ export const useMenuItem = () => {
         </svg>
       ),
       path: '/requests',
-      matchPaths: [
-        '/post-requests',
-        '/other-requests',
-        '/post-request-categories',
-      ],
+      matchPaths: ['/post-requests', '/other-requests'],
       role: [...ALL_CLIENT_ROLES],
     },
     {
