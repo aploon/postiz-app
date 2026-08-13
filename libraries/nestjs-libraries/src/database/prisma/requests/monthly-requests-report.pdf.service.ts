@@ -271,7 +271,7 @@ export class MonthlyRequestsReportPdfService {
         <div class="party">
           <div class="party-label">Delivery to</div>
           <div class="party-name">${this.escape(input.organizationName)}</div>
-          <div class="party-line">Organization administrators</div>
+          <!--<div class="party-line">Organization administrators</div>-->
         </div>
       </div>
 
@@ -310,7 +310,7 @@ export class MonthlyRequestsReportPdfService {
         <div>38, Rs. 14 114 Avakpa Kapodji, Porto-Novo, Bénin</div>
         <div>69 rue Tisseur, Longueuil, Québec J4V 3K6, Canada</div>
         <div>+229 60 26 36 82 / +1 514 576 2663</div>
-        <div>contact@takkatech.com<br/>www.takkatech.com</div>
+        <div>info@takkatech.com<br/>www.takkatech.com</div>
       </div>
       <div class="footer-bar"></div>
     </div>
